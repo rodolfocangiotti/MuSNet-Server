@@ -17,7 +17,11 @@ Payload::~Payload() {
 #endif
 }
 
-const void* Payload::buffer() const {
+const Buffer& Payload::buffer() const {
+  return myBuff;
+}
+
+const void* Payload::rawBuffer() const {
   return myBuff.data();
 }
 

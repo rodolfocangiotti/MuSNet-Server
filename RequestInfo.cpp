@@ -18,6 +18,9 @@ void RequestInfo::setAddress(const struct sockaddr_in* addrss, const socklen_t* 
   myAddrss = *addrss;
   myAddrssLen = *addrssLen;
 }
+void RequestInfo::setFileDescriptor(SocketFD s) {
+  mySockFD = s;
+}
 
 void* RequestInfo::pointWritableBuffer() {
   return myBuffer.data();
@@ -31,6 +34,10 @@ socklen_t RequestInfo::addressLength() const {
   return myAddrssLen;
 }
 
-const void* RequestInfo::buffer() const {
-  return myBuffer.data();
+const Buffer& RequestInfo::buffer() const {
+  return myBuffer;
+}
+
+SocketFD RequestInfo::fileDescriptor() const {
+  return mySockFD;
 }

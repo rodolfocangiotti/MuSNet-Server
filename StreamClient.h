@@ -2,7 +2,9 @@
 #define STREAM_CLIENT_H
 
 #include <cstdint>
-#include "SharedBuffer.h"
+#include <vector>
+#include "types.h"
+//#include "SharedBuffer.h"
 
 class StreamClient {
 public:
@@ -12,15 +14,17 @@ public:
   StreamClient(const Token t);
   ~StreamClient();
   // ********************
-  const SharedBuffer& sharedBuffer() const;
+  const AudioVector& audioVector() const;
   Token token() const;
-  ID lastID() const;
+  ID id() const;
   // ********************
+  void* pointWritableVector();
+  void clearVector();
+  void updateVector(AudioVector v);
   void updateID(ID i);
-  SharedBuffer* pointSharedBuffer();
 private:
-  ID myLastID;
-  SharedBuffer myBuffer;
+  AudioVector myAudioVector;
+  ID myID;
   Token myToken;
 };
 

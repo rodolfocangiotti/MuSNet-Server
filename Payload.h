@@ -3,11 +3,10 @@
 
 #include <cstdint>
 #include <vector>
+#include "types.h"
 
 class Payload {
 public:
-  typedef uint8_t Byte;
-  typedef std::vector<Byte> Buffer;
   typedef uint8_t Header;
   typedef uint16_t MaxSize;
   typedef uint16_t Size;
@@ -16,7 +15,8 @@ public:
   ~Payload();
   Payload(const Payload& other) = delete; // TODO Test copy constructor...
   // ********************
-  const void* buffer() const;
+  const Buffer& buffer() const;
+  const void* rawBuffer() const;
   Header header() const;
   Size size() const;
   // ********************
