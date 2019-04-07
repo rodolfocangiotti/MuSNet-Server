@@ -16,15 +16,15 @@ UDPDatagram::~UDPDatagram() {
 #endif
 }
 
-UDPDatagram::Token UDPDatagram::token() const {
+StreamClient::Token UDPDatagram::token() const {
   const Byte* b = &(myBuff[1]);
-  const Token* tp = reinterpret_cast<const Token*>(b);
+  const StreamClient::Token* tp = reinterpret_cast<const StreamClient::Token*>(b);
   return *tp;
 }
 
-UDPDatagram::ID UDPDatagram::id() const {
+StreamClient::TID UDPDatagram::tid() const {
   const Byte* b = &(myBuff[5]);
-  const ID* ip = reinterpret_cast<const ID*>(b);
+  const StreamClient::TID* ip = reinterpret_cast<const StreamClient::TID*>(b);
   return *ip;
 }
 
@@ -56,17 +56,17 @@ void UDPDatagram::buildAudioStreamRequest() {
 }
 */
 
-void UDPDatagram::buildAudioStreamResponse(AudioVector& v, Token t, ID i) {
-  mySize = sizeof (Header) + sizeof (Token) + sizeof(ID) + sizeof (Size) + sizeof (AudioSample) * v.size();
+void UDPDatagram::buildAudioStreamResponse(AudioVector& v, StreamClient::Token t, StreamClient::TID n) {
+  mySize = sizeof (Header) + sizeof (StreamClient::Token) + sizeof(StreamClient::TID) + sizeof (Size) + sizeof (AudioSample) * v.size();
   Byte* b = &(myBuff[0]);
   Header* hp = static_cast<Header*>(b);
   *hp = AUDIO_STREAM_DATA;
   b = &(myBuff[1]);
-  Token* tp = reinterpret_cast<Token*>(b);
+  StreamClient::Token* tp = reinterpret_cast<StreamClient::Token*>(b);
   *tp = t;
   b = &(myBuff[5]);
-  ID* ip = reinterpret_cast<ID*>(b);
-  *ip = i;
+  StreamClient::TID* ip = reinterpret_cast<StreamClient::TID*>(b);
+  *ip = n;
   b = &(myBuff[13]);
   Size* sp = reinterpret_cast<Size*>(b);
   *sp = v.size();

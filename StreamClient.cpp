@@ -1,10 +1,11 @@
 #include <cassert>
 #include <iostream>
 #include "StreamClient.h"
+#include "commons.h"
 
 StreamClient::StreamClient(const Token t):
-  myAudioVector(512 * 2), // TODO...
-  myID(0),
+  myAudioVect(AUDIO_VECTOR_SIZE * NUM_CHANNELS),
+  myTID(0),
   myToken(t) {
 #ifdef DEBUG
   std::cout << "[DEBUG] Constructing StreamClient class..." << std::endl;
@@ -18,11 +19,11 @@ StreamClient::~StreamClient() {
 }
 
 const AudioVector& StreamClient::audioVector() const {
-  return myAudioVector;
+  return myAudioVect;
 }
 
-StreamClient::ID StreamClient::id() const {
-  return myID;
+StreamClient::TID StreamClient::tid() const {
+  return myTID;
 }
 
 StreamClient::Token StreamClient::token() const {
@@ -30,22 +31,27 @@ StreamClient::Token StreamClient::token() const {
 }
 
 void* StreamClient::pointWritableVector() {
-  return myAudioVector.data();
+  return myAudioVect.data();
 }
 
-void StreamClient::updateID(ID i) {
-  assert(i > myID);
-  myID = i;
+void StreamClient::updateTID(TID n) {
+  if (!(n > myTID)) {
+    std::cout << "Client token: " << myToken << std::endl;
+    std::cout << "Last TID: " << myTID << "\tCurrent TID: " << n << std::endl;
+  }
+  assert(n > myTID);
+  myTID = n;
 }
 
 void StreamClient::clearVector() {
-  for (int i = 0; i < myAudioVector.size(); i++) {
-    myAudioVector[i] = 0.0;
+  for (int i = 0; i < myAudioVect.size(); i++) {
+    myAudioVect[i] = 0.0;
   }
 }
 
 void StreamClient::updateVector(AudioVector v) {
-  for (int i = 0; i < myAudioVector.size(); i++) {
-    myAudioVector[i] = v[i];
+  assert(myAudioVect.size() == v.size());
+  for (int i = 0; i < myAudioVect.size(); i++) {
+    myAudioVect[i] = v[i];
   }
 }

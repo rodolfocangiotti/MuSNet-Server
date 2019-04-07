@@ -15,9 +15,9 @@ TCPSegment::~TCPSegment() {
 #endif
 }
 
-TCPSegment::Token TCPSegment::token() const {
+StreamClient::Token TCPSegment::token() const {
   const Byte* b = &(myBuff[1]);
-  const Token* pt = reinterpret_cast<const Token*>(b);
+  const StreamClient::Token* pt = reinterpret_cast<const StreamClient::Token*>(b);
   return *pt;
 }
 
@@ -28,23 +28,23 @@ void TCPSegment::buildEntryRequest() {
   *ph = ENTRY_REQUEST;
 }
 
-void TCPSegment::buildEntryResponse(Token t) {
-  mySize = sizeof (Header) + sizeof (Token);
+void TCPSegment::buildEntryResponse(StreamClient::Token t) {
+  mySize = sizeof (Header) + sizeof (StreamClient::Token);
   Byte* b = &(myBuff[0]);
   Header* ph = reinterpret_cast<Header*>(b);
   *ph = OKAY;
   b = &(myBuff[1]);
-  Token* pt = reinterpret_cast<Token*>(b);
+  StreamClient::Token* pt = reinterpret_cast<StreamClient::Token*>(b);
   *pt = t;
 }
 
-void TCPSegment::buildExitRequest(Token t) {
-  mySize = sizeof (Header) + sizeof (Token);
+void TCPSegment::buildExitRequest(StreamClient::Token t) {
+  mySize = sizeof (Header) + sizeof (StreamClient::Token);
   Byte* b = &(myBuff[0]);
   Header* ph = reinterpret_cast<Header*>(b);
   *ph = EXIT_REQUEST;
   b = &(myBuff[1]);
-  Token* pt = reinterpret_cast<Token*>(b);
+  StreamClient::Token* pt = reinterpret_cast<StreamClient::Token*>(b);
   *pt = t;
 }
 

@@ -5,8 +5,14 @@
 #include "commons.h"
 
 TCPListener::TCPListener(Manager& m):
+  mySockFD(0),
+  myAddrss(), clieAddrss(),
+  myAddrssLen(), clieAddrssLen(),
   myPayload(TCP_BUFFER_SIZE),
-  myManager(m) {
+  myManager(m),
+  active(false),
+  myMutex(),
+  myThread() {
 #ifdef DEBUG
   std::cout << "[DEBUG] Constructing TCPListener class..." << std::endl;
 #endif
@@ -37,7 +43,8 @@ void TCPListener::initSocket() {
 
 void TCPListener::bindSocket(const PortNum p) {
   myAddrss.sin_family = AF_INET;  // Fill address information...
-  myAddrss.sin_addr.s_addr = INADDR_ANY;
+  //myAddrss.sin_addr.s_addr = INADDR_ANY;
+  myAddrss.sin_addr.s_addr = htonl(INADDR_ANY);
   myAddrss.sin_port = htons(p);
   myAddrssLen = sizeof myAddrss;
   if (bind(mySockFD, (const struct sockaddr*) &myAddrss, myAddrssLen) < 0) {  // Bind the socket with the client address...
@@ -65,27 +72,37 @@ void TCPListener::configure(const PortNum p) {
 }
 
 void TCPListener::listen() {
-  if (::listen(mySockFD, 1) < 0) {  // TODO Check backlog parameter...
+  if (::listen(mySockFD, 5) < 0) {  // TODO Check backlog parameter...
     perror("listen()");
     //throw TCPListenerException("Listen start failed."); // TODO Define exception message...
   }
-  fd_set currSet, nextSet;
+  fd_set currSet;
   FD_ZERO(&currSet);
   FD_SET(mySockFD, &currSet);
-  SocketFD currMaxFD = mySockFD, nextMaxFD;
+  fd_set nextSet = currSet;
+  SocketFD currMaxFD = mySockFD;
+  SocketFD nextMaxFD = mySockFD;
   struct timeval timeout = {1, 0}; // Define a timeout of 1 second...
   while (listening()) {
     // Receive segment from client...
+#ifdef DEBUG
+    std::cout << ">>> Current max. file descr.: " << currMaxFD << std::endl;  // TODO Remove it!
+#endif
     int descrAmount = select(currMaxFD + 1, &currSet, NULL, NULL, &timeout);
     if (!(descrAmount > 0)) {
       if (descrAmount < 0) {
         perror("select()");
       }
+#ifdef DEBUG
+      /*
       std::cout << "[DEBUG] Error receiving segment or timeout reached!" << std::endl;
+      */
+#endif
+      currSet = nextSet;  // WTF?
       continue;
     }
-
-    for(int i = 0; i < currMaxFD; i++) {
+    // ***** SOCKET ITERATION BLOCK ******
+    for(int i = 0; i < currMaxFD + 1; i++) {
       if (FD_ISSET(i, &currSet)) {
         if (i == mySockFD) {
           SocketFD newSockFD = accept(mySockFD, (struct sockaddr*) &clieAddrss, &clieAddrssLen);
@@ -93,15 +110,20 @@ void TCPListener::listen() {
             perror("accept()");
             continue;
           }
+#ifdef DEBUG
+          std::cout << "New TCP connection accepted!" << std::endl;
+#endif
           FD_SET(newSockFD, &nextSet);
           if (newSockFD > currMaxFD) {
-            nextMaxFD = currMaxFD;
+            nextMaxFD = newSockFD;
           }
         } else {
+          // ***** RECEIVE BLOCK *****
           int bytes = receive(i, myPayload.pointWritableBuffer(), TCP_BUFFER_SIZE);
           if (bytes < 0 ) {
             perror("recv()");
           } else if (bytes == 0) {  // Client is disconnected...
+            shutdown(SHUT_RDWR, i);
             close(i);
             FD_CLR(i, &nextSet);
             if (i == currMaxFD) {
@@ -114,25 +136,28 @@ void TCPListener::listen() {
           } else {
             // Manage received message
             if (myPayload.header() == ENTRY_REQUEST) {
-              Manager::Token t = myManager.addClient();
+              StreamClient::Token t = myManager.addClient();
               myPayload.buildEntryResponse(t);
             } else if (myPayload.header() == EXIT_REQUEST) {
-              TCPSegment::Token t = myPayload.token();
+              StreamClient::Token t = myPayload.token();
               myManager.removeClient(t);
               myPayload.buildExitResponse();
             } else {
-              std::cerr << "[ERROR]" << std::endl;
+              std::cerr << "[ERROR] Not consistent header of TCP segment!" << std::endl;
               continue;
             }
-            int bytes = send(i, myPayload.buffer(), myPayload.size());
+            int bytes = send(i, myPayload.rawBuffer(), myPayload.size());
             if (bytes < 0) {
               perror("send");
             }
           }
+          // ***** END OF RECEIVE BLOCK *****
         }
       }
     }
-
+    // ***** END OF SOCKET ITERATION BLOCK *****
+    currSet = nextSet;
+    currMaxFD = nextMaxFD; // Update maximum file descriptor value for the next cycle...
   }
 }
 

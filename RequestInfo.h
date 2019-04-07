@@ -25,7 +25,7 @@ private:
   socklen_t myAddrssLen;
   SocketFD mySockFD;
   // ********************
-  Buffer myBuffer;
+  Buffer myBuff;
 };
 
 #endif

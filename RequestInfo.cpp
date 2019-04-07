@@ -2,7 +2,7 @@
 #include "RequestInfo.h"
 
 RequestInfo::RequestInfo(BufferSize bs):
-  myBuffer(bs) {
+  myBuff(bs) {
 #ifdef DEBUG
   std::cout << "[DEBUG] Constructing RequestInfo class..." << std::endl;
 #endif
@@ -10,7 +10,9 @@ RequestInfo::RequestInfo(BufferSize bs):
 
 RequestInfo::~RequestInfo() {
 #ifdef DEBUG
+  /*
   std::cout << "[DEBUG] Destructing RequestInfo class..." << std::endl;
+  */
 #endif
 }
 
@@ -23,7 +25,7 @@ void RequestInfo::setFileDescriptor(SocketFD s) {
 }
 
 void* RequestInfo::pointWritableBuffer() {
-  return myBuffer.data();
+  return myBuff.data();
 }
 
 struct sockaddr_in RequestInfo::address() const {
@@ -35,7 +37,7 @@ socklen_t RequestInfo::addressLength() const {
 }
 
 const Buffer& RequestInfo::buffer() const {
-  return myBuffer;
+  return myBuff;
 }
 
 SocketFD RequestInfo::fileDescriptor() const {

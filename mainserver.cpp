@@ -21,7 +21,7 @@ int main(int argc, const char* argv[]) {
     while (::running) {
       sleep(1);
     }
-    s.stop();
+    s.stop(); // THE EXECUTION BLOCKS HERE WHEN TERMINATION SIGNAL IS RECEIVED!
   } catch (std::exception& e) {
     std::cerr << e.what() << std::endl;
   }

@@ -4,27 +4,26 @@
 #include <cstdint>
 #include <vector>
 #include "types.h"
-//#include "SharedBuffer.h"
 
 class StreamClient {
 public:
-  typedef uint32_t ID;
-  typedef uint32_t Token;
+  typedef uint16_t Token;
+  typedef uint32_t TID;
   // ********************
-  StreamClient(const Token t);
+  StreamClient(Token t);
   ~StreamClient();
   // ********************
   const AudioVector& audioVector() const;
   Token token() const;
-  ID id() const;
+  TID tid() const;
   // ********************
   void* pointWritableVector();
   void clearVector();
   void updateVector(AudioVector v);
-  void updateID(ID i);
+  void updateTID(TID i);
 private:
-  AudioVector myAudioVector;
-  ID myID;
+  AudioVector myAudioVect;
+  TID myTID;  // Transaction identifier...
   Token myToken;
 };
 

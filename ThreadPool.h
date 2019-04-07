@@ -13,7 +13,7 @@ public:
   ~ThreadPool();
   void start();
   void stop();
-  void append(const RequestInfo& r);
+  void append(const RequestInfo& r); // TODO Check if a copy of the object is better than a reference...
 private:
   void thread();
   T& myTask;

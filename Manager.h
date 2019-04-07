@@ -10,19 +10,20 @@
 
 class Manager {
 public:
-  typedef uint32_t Token;
   Manager();
   ~Manager();
   // ********************
-  AudioVector getOtherClientStreams(Token t);
-  StreamClient::ID getClientID(Token t);
+  AudioVector getOtherClientStreams(StreamClient::Token t);
+  StreamClient::TID getClientTID(StreamClient::Token t);
   // ********************
-  Token addClient();
-  void removeClient(Token t);
-  void updateClientID(Token t, StreamClient::ID i);
-  void updateClientStream(Token t, AudioVector v);
-  void clearClientStream(Token t);
+  StreamClient::Token addClient();
+  void removeClient(StreamClient::Token t);
+  void updateClientTID(StreamClient::Token t, StreamClient::TID i);
+  void updateClientStream(StreamClient::Token t, AudioVector v);
+  void clearClientStream(StreamClient::Token t);
 private:
+  void debugPrint();
+  StreamClient::Token myTokenHist;
   std::mutex myMutex;
   std::vector<StreamClient> myClients;
 };
