@@ -77,16 +77,12 @@ void UDPListener::listen() {
     // Receive datagram from client...
     if (receiveWithTimeout(myRequestInfo.pointWritableBuffer(), UDP_BUFFER_SIZE) < 0) {
 #ifdef DEBUG
-      /*
       std::cout << "[DEBUG] Error receiving datagram or timeout reached!" << std::endl;
-      */
 #endif
       continue;
     }
 #ifdef DEBUG
-    /*
     std::cout << "[DEBUG] Datagram received!" << std::endl;
-    */
 #endif
     myRequestInfo.setFileDescriptor(mySockFD);
     myRequestInfo.setAddress(&clieAddrss, &clieAddrssLen);

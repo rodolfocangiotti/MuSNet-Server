@@ -94,9 +94,7 @@ void TCPListener::listen() {
         perror("select()");
       }
 #ifdef DEBUG
-      /*
       std::cout << "[DEBUG] Error receiving segment or timeout reached!" << std::endl;
-      */
 #endif
       currSet = nextSet;  // WTF?
       continue;
@@ -128,7 +126,7 @@ void TCPListener::listen() {
             std::cout << "TCP connection closed!" << std::endl;
             FD_CLR(i, &nextSet);
             if (i == currMaxFD) {
-              for (int j = 0; i < currMaxFD; i++) { // Update maximum file descriptor value...
+              for (int j = 0; j < currMaxFD; j++) { // Update maximum file descriptor value...
                 if (FD_ISSET(j, &nextSet)) {
                   nextMaxFD = j;
                 }
