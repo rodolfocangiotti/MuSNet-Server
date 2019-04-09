@@ -9,7 +9,7 @@
 class RequestInfo {
 public:
   typedef uint64_t BufferSize;
-  RequestInfo(BufferSize s);
+  RequestInfo(BufferSize bs);
   ~RequestInfo();
   // ********************
   void* pointWritableBuffer();

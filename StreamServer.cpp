@@ -35,8 +35,17 @@ void StreamServer::start() {
 
 void StreamServer::stop() {
   if (active) {
+#ifdef DEBUG
+    std::cout << "[DEBUG] Stopping TCP listener..." << std::endl;
+#endif
     myTCPListnr.stop();
+#ifdef DEBUG
+    std::cout << "[DEBUG] Stopping UDP listener..." << std::endl;
+#endif
     myUDPListnr.stop();
+#ifdef DEBUG
+    std::cout << "[DEBUG] Stopping thread pool..." << std::endl;
+#endif
     myUDPThrds.stop();
     active = false;
   }

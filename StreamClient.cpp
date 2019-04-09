@@ -4,7 +4,7 @@
 #include "commons.h"
 
 StreamClient::StreamClient(const Token t):
-  myAudioVect(AUDIO_VECTOR_SIZE * NUM_CHANNELS),
+  myAudioVect(AUDIO_VECTOR_SIZE * NUM_CHANNELS, 0.0),
   myTID(0),
   myToken(t) {
 #ifdef DEBUG
@@ -34,13 +34,13 @@ void* StreamClient::pointWritableVector() {
   return myAudioVect.data();
 }
 
-void StreamClient::updateTID(TID n) {
-  if (!(n > myTID)) {
+void StreamClient::updateTID(TID tid) {
+  if (!(tid > myTID)) {
     std::cout << "Client token: " << myToken << std::endl;
-    std::cout << "Last TID: " << myTID << "\tCurrent TID: " << n << std::endl;
+    std::cout << "Last TID: " << myTID << "\tCurrent TID: " << tid << std::endl;
   }
-  assert(n > myTID);
-  myTID = n;
+  assert(tid > myTID);
+  myTID = tid;
 }
 
 void StreamClient::clearVector() {
@@ -50,7 +50,7 @@ void StreamClient::clearVector() {
 }
 
 void StreamClient::updateVector(AudioVector v) {
-  assert(myAudioVect.size() == v.size());
+  assert(v.size() == myAudioVect.size());
   for (int i = 0; i < myAudioVect.size(); i++) {
     myAudioVect[i] = v[i];
   }

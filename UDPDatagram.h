@@ -20,8 +20,7 @@ public:
   StreamSize streamSize() const;
   AudioVector streamCopy() const;
   // ********************
-  //void buildAudioStream(AudioVector& v, Mode m);
-  void buildAudioStreamResponse(AudioVector& v, StreamClient::Token t, StreamClient::TID n);
+  void buildAudioStream(AudioVector& v, StreamClient::Token t, StreamClient::TID tid);
 protected:
   void setStreamSize(StreamSize ss);
   void setStreamContent(AudioVector& v);

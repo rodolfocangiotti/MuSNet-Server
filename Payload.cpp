@@ -5,7 +5,7 @@
 // TODO Check if it should be better to compact the code, avoting repetition...
 
 Payload::Payload(MaxSize ms):
-  myBuff(ms, 0.0), mySize(0) {
+  myBuff(ms, 0), mySize(0) {
 #ifdef DEBUG
   std::cout << "[DEBUG] Constructing Payload class..." << std::endl;
 #endif

@@ -12,16 +12,16 @@ class TCPListener {
 public:
   TCPListener(Manager& m);
   ~TCPListener();
-  void configure(const PortNum p);
+  void configure(const PortNum pn);
   void start();
   void stop();
 private:
   void initSocket();
-  void bindSocket(const PortNum p);
+  void bindSocket(const PortNum pn);
   void initClientAddress();
   void listen();
-  int send(SocketFD d, const void* buff, size_t s);
-  int receive(SocketFD d, void* buff, size_t s);
+  int send(SocketFD sfd, const void* buff, size_t s);
+  int receive(SocketFD sfd, void* buff, size_t s);
   // ********************
   bool listening();
   // ********************

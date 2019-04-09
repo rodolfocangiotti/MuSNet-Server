@@ -43,10 +43,10 @@ void UDPListener::initSocket() {
   }
 }
 
-void UDPListener::bindSocket(PortNum p) {
+void UDPListener::bindSocket(PortNum pn) {
   myAddrss.sin_family = AF_INET;  // Fill UDPListener information...
   myAddrss.sin_addr.s_addr = INADDR_ANY;
-  myAddrss.sin_port = htons(p);
+  myAddrss.sin_port = htons(pn);
   myAddrssLen = sizeof myAddrss;
   if (bind(mySockFD, (const struct sockaddr*) &myAddrss, myAddrssLen) < 0) {  // Bind the socket with the client address...
     perror("bind()");
@@ -66,9 +66,9 @@ void UDPListener::initClientAddress() {
   clieAddrssLen = sizeof clieAddrss;
 }
 
-void UDPListener::configure(PortNum myPort) {
+void UDPListener::configure(PortNum pn) {
   initSocket();
-  bindSocket(myPort);
+  bindSocket(pn);
   initClientAddress();
 }
 
@@ -103,12 +103,18 @@ void UDPListener::start() {
 }
 
 void UDPListener::stop() {
-  std::lock_guard<std::mutex> l(myMutex);
-  if (active) {
+  bool join = false;
+  {
+    std::lock_guard<std::mutex> l(myMutex);
+    if (active) {
+      active = false;
+      join = true;
+    }
+  }
+  if (join) {
     if (myThread.joinable()) {
       myThread.join();
     }
-    active = false;
   }
 }
 

@@ -20,7 +20,7 @@ public:
   void* pointWritableVector();
   void clearVector();
   void updateVector(AudioVector v);
-  void updateTID(TID i);
+  void updateTID(TID tid);
 private:
   AudioVector myAudioVect;
   TID myTID;  // Transaction identifier...

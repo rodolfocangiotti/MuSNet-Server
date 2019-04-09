@@ -20,6 +20,7 @@ void UDPResponse::operator()(const RequestInfo& r) {
   struct sockaddr_in addrss = r.address();
   socklen_t addrssLen = r.addressLength();
   SocketFD sockFD = r.fileDescriptor();
+
 #ifdef DEBUG  // TODO
   /*
   std::cout << "Client socket: " << sockFD << std::endl;
@@ -27,6 +28,7 @@ void UDPResponse::operator()(const RequestInfo& r) {
   std::cout << "Address length: " << addrssLen << std::endl;
   */
 #endif
+
   const Buffer b = r.buffer();
   Byte* bp = static_cast<Byte*>(myPayload.pointWritableBuffer());
   for (int i = 0; i < b.size(); i++) {  // Copy the RequestInfo buffer to UDPDatagram...
@@ -42,14 +44,14 @@ void UDPResponse::operator()(const RequestInfo& r) {
       AudioVector toClient;
       {
         std::lock_guard<std::mutex> l(myMutex);
-        myManager.updateClientID(t, tid);  // XXX MULTITHREADING CAN CREATE ASYNCRONIZATION BETWEEN WHEN THE ID IS READ AND WHEN IT IS UPDATED!
+        myManager.updateClientTID(t, tid);  // XXX MULTITHREADING CAN CREATE ASYNCRONIZATION BETWEEN WHEN THE ID IS READ AND WHEN IT IS UPDATED!
         // MUTEX ADDED!
         // Save stream from client...
         myManager.updateClientStream(t, myPayload.streamCopy());
         // Build a new datagram and send it to client...
         toClient = myManager.getOtherClientStreams(t);
       }
-      myPayload.buildAudioStreamResponse(toClient, t, tid);
+      myPayload.buildAudioStream(toClient, t, tid);
       int bytes = ::sendto(sockFD, myPayload.rawBuffer(), UDP_BUFFER_SIZE, 0, (const struct sockaddr*) &addrss, addrssLen);
       if (bytes < 0) {
         perror("send");

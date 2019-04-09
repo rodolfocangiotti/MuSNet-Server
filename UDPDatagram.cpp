@@ -23,40 +23,30 @@ StreamClient::Token UDPDatagram::token() const {
 }
 
 StreamClient::TID UDPDatagram::tid() const {
-  const Byte* b = &(myBuff[5]);
-  const StreamClient::TID* ip = reinterpret_cast<const StreamClient::TID*>(b);
-  return *ip;
+  const Byte* b = &(myBuff[3]);
+  const StreamClient::TID* tidp = reinterpret_cast<const StreamClient::TID*>(b);
+  return *tidp;
 }
 
 UDPDatagram::StreamSize UDPDatagram::streamSize() const {
-  const Byte* b = &(myBuff[13]);
+  const Byte* b = &(myBuff[7]);
   const StreamSize* ssp = reinterpret_cast<const StreamSize*>(b);
   return *ssp;
 }
 
 AudioVector UDPDatagram::streamCopy() const { // This method returns a copy of the audio streaming content...
-  const Byte* b = &(myBuff[13]);
+  const Byte* b = &(myBuff[7]);
   const StreamSize* ssp = reinterpret_cast<const StreamSize*>(b);
-  b = &(myBuff[15]);
+  b = &(myBuff[9]);
   const AudioSample* asp = reinterpret_cast<const AudioSample*>(b);
-  AudioVector v(*ssp);
+  AudioVector v(*ssp, 0.0);
   for (int i = 0; i < v.size(); i++) {
     v[i] = asp[i];
   }
   return v;
 }
 
-/*
-void UDPDatagram::buildAudioStreamRequest() {
-  mySize = sizeof (Header) + sizeof (Token);
-  Header* head = static_cast<Header*>(myBuff.data());
-  *head = AUDIO_STREAM_REQUEST;
-  Token* t = reinterpret_cast<Token*>(++head);
-  *t = myToken;
-}
-*/
-
-void UDPDatagram::buildAudioStreamResponse(AudioVector& v, StreamClient::Token t, StreamClient::TID n) {
+void UDPDatagram::buildAudioStream(AudioVector& v, StreamClient::Token t, StreamClient::TID tid) {
   mySize = sizeof (Header) + sizeof (StreamClient::Token) + sizeof(StreamClient::TID) + sizeof (Size) + sizeof (AudioSample) * v.size();
   Byte* b = &(myBuff[0]);
   Header* hp = static_cast<Header*>(b);
@@ -64,13 +54,13 @@ void UDPDatagram::buildAudioStreamResponse(AudioVector& v, StreamClient::Token t
   b = &(myBuff[1]);
   StreamClient::Token* tp = reinterpret_cast<StreamClient::Token*>(b);
   *tp = t;
-  b = &(myBuff[5]);
-  StreamClient::TID* ip = reinterpret_cast<StreamClient::TID*>(b);
-  *ip = n;
-  b = &(myBuff[13]);
-  Size* sp = reinterpret_cast<Size*>(b);
-  *sp = v.size();
-  b = &(myBuff[15]);
+  b = &(myBuff[3]);
+  StreamClient::TID* tidp = reinterpret_cast<StreamClient::TID*>(b);
+  *tidp = tid;
+  b = &(myBuff[7]);
+  StreamSize* ssp = reinterpret_cast<StreamSize*>(b);
+  *ssp = v.size();
+  b = &(myBuff[9]);
   AudioSample* asp = reinterpret_cast<AudioSample*>(b);
   for (int i = 0; i < v.size(); i++) {
     asp[i] = v[i];

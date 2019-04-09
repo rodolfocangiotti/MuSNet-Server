@@ -1,7 +1,7 @@
 #ifdef __linux__
 #include <signal.h>
 #endif
-#include <unistd.h>
+#include <chrono>
 #include <iostream>
 #include "StreamServer.h"
 
@@ -19,7 +19,7 @@ int main(int argc, const char* argv[]) {
     s.start();
     ::running = true;
     while (::running) {
-      sleep(1);
+      std::this_thread::sleep_for(std::chrono::seconds(1));
     }
     s.stop(); // THE EXECUTION BLOCKS HERE WHEN TERMINATION SIGNAL IS RECEIVED!
   } catch (std::exception& e) {

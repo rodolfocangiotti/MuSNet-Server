@@ -2,7 +2,7 @@
 #include "RequestInfo.h"
 
 RequestInfo::RequestInfo(BufferSize bs):
-  myBuff(bs) {
+  myBuff(bs, 0) {
 #ifdef DEBUG
   std::cout << "[DEBUG] Constructing RequestInfo class..." << std::endl;
 #endif

@@ -11,7 +11,8 @@ ThreadPool<T>::ThreadPool(T& t):
   myCondVar(),
   myMutex(),
   myQueue(),
-  myThreads(/*std::thread::hardware_concurrency() - */ 1) { // It seems that a single thread works better than multithreading!
+  myThreads(NUM_THREADS) {
+  //myThreads(std::thread::hardware_concurrency() - 1) { // It seems that a single thread works better than multithreading!
   // TODO Check if code can be optimized to exploit multithreading!
 #ifdef DEBUG
   std::cout << "[DEBUG] Constructing ThreadPool class..." << std::endl;

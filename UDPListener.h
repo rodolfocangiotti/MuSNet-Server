@@ -13,12 +13,12 @@ class UDPListener {
 public:
   UDPListener(ThreadPool<UDPResponse>& tp);
   ~UDPListener();
-  void configure(PortNum p);
+  void configure(PortNum pn);
   void start();
   void stop();
 private:
   void initSocket();
-  void bindSocket(PortNum p);
+  void bindSocket(PortNum pn);
   void initClientAddress();
   void listen();
   int receive(void* buff, size_t s);

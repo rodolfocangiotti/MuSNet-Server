@@ -41,11 +41,11 @@ void TCPListener::initSocket() {
   }
 }
 
-void TCPListener::bindSocket(const PortNum p) {
+void TCPListener::bindSocket(const PortNum pn) {
   myAddrss.sin_family = AF_INET;  // Fill address information...
   //myAddrss.sin_addr.s_addr = INADDR_ANY;
   myAddrss.sin_addr.s_addr = htonl(INADDR_ANY);
-  myAddrss.sin_port = htons(p);
+  myAddrss.sin_port = htons(pn);
   myAddrssLen = sizeof myAddrss;
   if (bind(mySockFD, (const struct sockaddr*) &myAddrss, myAddrssLen) < 0) {  // Bind the socket with the client address...
     perror("bind()");
@@ -65,9 +65,9 @@ void TCPListener::initClientAddress() {
   clieAddrssLen = sizeof clieAddrss;
 }
 
-void TCPListener::configure(const PortNum p) {
+void TCPListener::configure(const PortNum pn) {
   initSocket();
-  bindSocket(p);
+  bindSocket(pn);
   initClientAddress();
 }
 
@@ -125,6 +125,7 @@ void TCPListener::listen() {
           } else if (bytes == 0) {  // Client is disconnected...
             shutdown(SHUT_RDWR, i);
             close(i);
+            std::cout << "TCP connection closed!" << std::endl;
             FD_CLR(i, &nextSet);
             if (i == currMaxFD) {
               for (int j = 0; i < currMaxFD; i++) { // Update maximum file descriptor value...
@@ -171,21 +172,27 @@ void TCPListener::start() {
 }
 
 void TCPListener::stop() {
-  std::lock_guard<std::mutex> l(myMutex);
-  if (active) {
+  bool join = false;
+  {
+    std::lock_guard<std::mutex> l(myMutex);
+    if (active) {
+      active = false;
+      join = true;
+    }
+  }
+  if (join) {
     if (myThread.joinable()) {
       myThread.join();
     }
-    active = false;
   }
 }
 
-int TCPListener::send(SocketFD d, const void* buff, size_t s) {
-  return ::send(d, buff, s, 0);
+int TCPListener::send(SocketFD sfd, const void* buff, size_t s) {
+  return ::send(sfd, buff, s, 0);
 }
 
-int TCPListener::receive(SocketFD d, void* buff, size_t s) {
-  return recv(d, buff, s, 0);
+int TCPListener::receive(SocketFD sfd, void* buff, size_t s) {
+  return recv(sfd, buff, s, 0);
 }
 
 bool TCPListener::listening() {
