@@ -115,7 +115,7 @@ void UDPListener::stop() {
 }
 
 int UDPListener::receive(void* buff, size_t s) {
-  return recvfrom(mySockFD, buff, s, 0, (struct sockaddr*) &clieAddrss, &clieAddrssLen);
+  return recvfrom(mySockFD, (char*) buff, s, 0, (struct sockaddr*) &clieAddrss, &clieAddrssLen);
 }
 
 int UDPListener::receiveWithTimeout(void* buff, size_t s) {

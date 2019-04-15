@@ -21,9 +21,6 @@ public:
   AudioVector streamCopy() const;
   // ********************
   void buildAudioStream(AudioVector& v, StreamClient::Token t, StreamClient::TID tid);
-protected:
-  void setStreamSize(StreamSize ss);
-  void setStreamContent(AudioVector& v);
 };
 
 #endif

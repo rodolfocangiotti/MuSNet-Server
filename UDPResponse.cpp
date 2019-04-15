@@ -52,7 +52,7 @@ void UDPResponse::operator()(const RequestInfo& r) {
         toClient = myManager.getOtherClientStreams(t);
       }
       myPayload.buildAudioStream(toClient, t, tid);
-      int bytes = ::sendto(sockFD, myPayload.rawBuffer(), UDP_BUFFER_SIZE, 0, (const struct sockaddr*) &addrss, addrssLen);
+      int bytes = ::sendto(sockFD, (const char*) myPayload.rawBuffer(), UDP_BUFFER_SIZE, 0, (const struct sockaddr*) &addrss, addrssLen);
       if (bytes < 0) {
         perror("send");
       }

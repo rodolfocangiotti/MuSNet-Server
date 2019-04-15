@@ -5,7 +5,7 @@
 // TODO Check if it should be better to compact the code, avoting repetition...
 
 Payload::Payload(MaxSize ms):
-  myBuff(ms, 0), mySize(0) {
+  myBuff(ms, 0.0), mySize(0) {
 #ifdef DEBUG
   std::cout << "[DEBUG] Constructing Payload class..." << std::endl;
 #endif
@@ -26,9 +26,9 @@ const void* Payload::rawBuffer() const {
 }
 
 Payload::Header Payload::header() const {
-  const Byte* b = &(myBuff[0]);
-  const Header* h = reinterpret_cast<const Header*>(b);
-  return *h;
+  const Byte* bp = &(myBuff[0]);
+  const Header* hp = reinterpret_cast<const Header*>(bp);
+  return *hp;
 }
 
 Payload::Size Payload::size() const {
