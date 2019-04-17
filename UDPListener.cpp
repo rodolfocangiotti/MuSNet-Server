@@ -8,6 +8,7 @@ UDPListener::UDPListener(ThreadPool<UDPResponse>& tp):
   mySockFD(0),
   myAddrss(), clieAddrss(),
   myAddrssLen(0), clieAddrssLen(0),
+  myTimeout(),
   myRequestInfo(UDP_BUFFER_SIZE),
   myThreadPool(tp),
   myMutex(),
@@ -73,20 +74,37 @@ void UDPListener::configure(PortNum pn) {
 }
 
 void UDPListener::listen() {
+  // define a set of file descriptors...
+  fd_set currSet;
+  FD_ZERO(&currSet);
+  FD_SET(mySockFD, &currSet);
+  fd_set nextSet = currSet;
+  myTimeout = {1, 0};
+
   while (listening()) {
     // Receive datagram from client...
-    if (receiveWithTimeout(myRequestInfo.pointWritableBuffer(), UDP_BUFFER_SIZE) < 0) {
+    int res = receiveWithTimeout(&currSet, myRequestInfo.pointWritableBuffer(), UDP_BUFFER_SIZE);
+    if (!(res > 0)) {
+      if (res < 0) {
+        perror("receiveWithTimeout()");
+        std::cerr << "[ERROR] Error receiving datagram!" << std::endl;
+      }
+      if (res == 0) {
 #ifdef DEBUG
-      std::cout << "[DEBUG] Error receiving datagram or timeout reached!" << std::endl;
+        std::cout << "[DEBUG] Timeout reached!" << std::endl;
 #endif
+      }
+      currSet = nextSet;
       continue;
     }
+
 #ifdef DEBUG
     std::cout << "[DEBUG] Datagram received!" << std::endl;
 #endif
     myRequestInfo.setFileDescriptor(mySockFD);
     myRequestInfo.setAddress(&clieAddrss, &clieAddrssLen);
     myThreadPool.append(myRequestInfo);
+    currSet = nextSet;
   }
 }
 
@@ -118,17 +136,13 @@ int UDPListener::receive(void* buff, size_t s) {
   return recvfrom(mySockFD, (char*) buff, s, 0, (struct sockaddr*) &clieAddrss, &clieAddrssLen);
 }
 
-int UDPListener::receiveWithTimeout(void* buff, size_t s) {
-  struct timeval timeout = {1, 0}; // Define a timeout of 1 second...
-  fd_set descrSet;
-  FD_ZERO(&descrSet);
-  FD_SET(mySockFD, &descrSet);
-  int descrAmount = select(mySockFD + 1, &descrSet, NULL, NULL, &timeout);
+int UDPListener::receiveWithTimeout(fd_set* fds, void* buff, size_t s) {
+  int descrAmount = select(mySockFD + 1, fds, NULL, NULL, &myTimeout);
   if (descrAmount > 0) {
-    assert(FD_ISSET(mySockFD, &descrSet));
+    assert(FD_ISSET(mySockFD, fds));
     return receive(buff, s);
   }
-  return -1;  // Return undefined error...
+  return descrAmount;
 }
 
 bool UDPListener::listening() {

@@ -22,13 +22,14 @@ private:
   void initClientAddress();
   void listen();
   int receive(void* buff, size_t s);
-  int receiveWithTimeout(void* buff, size_t s);
+  int receiveWithTimeout(fd_set* fds, void* buff, size_t s);
   // ********************
   bool listening();
   // ********************
   SocketFD mySockFD;
   struct sockaddr_in myAddrss, clieAddrss;
   socklen_t myAddrssLen, clieAddrssLen;
+  struct timeval myTimeout;
   // ********************
   RequestInfo myRequestInfo;
   ThreadPool<UDPResponse>& myThreadPool;
