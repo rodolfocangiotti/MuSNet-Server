@@ -16,6 +16,7 @@ public:
   void append(const RequestInfo& r); // TODO Check if a copy of the object is better than a reference...
 private:
   void thread();
+  unsigned int myThrdCounter;
   T& myTask;
   bool running;
   std::condition_variable myCondVar;

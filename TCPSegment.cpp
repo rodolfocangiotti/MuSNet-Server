@@ -4,13 +4,13 @@
 
 TCPSegment::TCPSegment(MaxSize ms):
   Payload(ms) {
-#ifdef DEBUG
+#if defined(DEBUG) && VERBOSENESS > 2
   std::cout << "[DEBUG] Constructing TCPSegment class..." << std::endl;
 #endif
 }
 
 TCPSegment::~TCPSegment() {
-#ifdef DEBUG
+#if defined(DEBUG) && VERBOSENESS > 2
   std::cout << "[DEBUG] Destructing TCPSegment class..." << std::endl;
 #endif
 }

@@ -5,14 +5,15 @@
 // TODO Check if it should be better to compact the code, avoting repetition...
 
 Payload::Payload(MaxSize ms):
-  myBuff(ms, 0.0), mySize(0) {
-#ifdef DEBUG
+  myBuff(ms, 0),
+  mySize(0) {
+#if defined(DEBUG) && VERBOSENESS > 2
   std::cout << "[DEBUG] Constructing Payload class..." << std::endl;
 #endif
 }
 
 Payload::~Payload() {
-#ifdef DEBUG
+#if defined(DEBUG) && VERBOSENESS > 2
   std::cout << "[DEBUG] Destructing Payload class..." << std::endl;
 #endif
 }

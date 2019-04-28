@@ -6,22 +6,21 @@
 
 template <typename T>
 ThreadPool<T>::ThreadPool(T& t):
+  myThrdCounter(0),
   myTask(t),
   running(false),
   myCondVar(),
   myMutex(),
   myQueue(),
   myThreads(NUM_THREADS) {
-  //myThreads(std::thread::hardware_concurrency() - 1) { // It seems that a single thread works better than multithreading!
-  // TODO Check if code can be optimized to exploit multithreading!
-#ifdef DEBUG
+#if defined(DEBUG) && VERBOSENESS > 2
   std::cout << "[DEBUG] Constructing ThreadPool class..." << std::endl;
 #endif
 }
 
 template <typename T>
 ThreadPool<T>::~ThreadPool() {
-#ifdef DEBUG
+#if defined(DEBUG) && VERBOSENESS > 2
   std::cout << "[DEBUG] Destructing ThreadPool class..." << std::endl;
 #endif
   stop();
@@ -69,6 +68,7 @@ void ThreadPool<T>::append(const RequestInfo& r) {
 template <typename T>
 void ThreadPool<T>::thread() {
   RequestInfo r(UDP_BUFFER_SIZE);
+  unsigned int thrdNum = ++myThrdCounter;
   while (true) {
     {
       std::unique_lock<std::mutex> l(myMutex);
@@ -77,7 +77,9 @@ void ThreadPool<T>::thread() {
           myCondVar.wait(l);
           continue;
         } else {
-          std::cout << "Exiting thread..." << std::endl;
+#if defined(DEBUG) && VERBOSENESS > 1
+          std::cout << "[DEBUG] Exiting thread n. " << thrdNum << "..." << std::endl;
+#endif
           break;
         }
       }
@@ -85,6 +87,9 @@ void ThreadPool<T>::thread() {
       myQueue.pop();
       // TODO Add here a proper code block if a queue limit is necessary...
     }
+#if defined(DEBUG) && VERBOSENESS > 2
+    std::cout << "Thread n." << thrdNum << " is computing request " << r.referDatagram().token() << "-" << r.referDatagram().tid() << " (token-TID)." << std::endl;
+#endif
     myTask(r);  // Do the task, passing it the request informations...
   }
 }

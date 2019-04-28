@@ -3,6 +3,7 @@
 #include <iostream>
 #include "UDPListener.h"
 #include "commons.h"
+#include "prettyprint.h"
 
 UDPListener::UDPListener(ThreadPool<UDPResponse>& tp):
   mySockFD(0),
@@ -14,7 +15,7 @@ UDPListener::UDPListener(ThreadPool<UDPResponse>& tp):
   myMutex(),
   myThread(),
   active(false) {
-#ifdef DEBUG
+#if defined(DEBUG) && VERBOSENESS > 2
   std::cout << "[DEBUG] Constructing UDPListener class..." << std::endl;
 #endif
 }
@@ -22,13 +23,13 @@ UDPListener::UDPListener(ThreadPool<UDPResponse>& tp):
 UDPListener::~UDPListener() {
   stop(); // Make sure the listening is stopped...
   close(mySockFD);
-#ifdef DEBUG
+#if defined(DEBUG) && VERBOSENESS > 2
   std::cout << "[DEBUG] Destructing UDPListener class..." << std::endl;
 #endif
 }
 
 void UDPListener::initSocket() {
-#ifdef DEBUG
+#if defined(DEBUG) && VERBOSENESS > 1
   std::cout << "[DEBUG] Initializing UDPListener socket..." << std::endl;
 #endif
   if ((mySockFD = socket(PF_INET, SOCK_DGRAM, 0)) < 0) { // Create socket file descriptor for UDP protocol...
@@ -54,7 +55,7 @@ void UDPListener::bindSocket(PortNum pn) {
     exit(EXIT_FAILURE);
     //throw UDPListenerException("Socket bind failed.");
   }
-#ifdef DEBUG
+#if defined(DEBUG) && VERBOSENESS > 1
   if (getsockname(mySockFD, (struct sockaddr*) &myAddrss, &myAddrssLen) < 0) {
     perror("getsockname()");
     exit(EXIT_FAILURE);
@@ -74,7 +75,7 @@ void UDPListener::configure(PortNum pn) {
 }
 
 void UDPListener::listen() {
-  // define a set of file descriptors...
+  // Define a set of file descriptors...
   fd_set currSet;
   FD_ZERO(&currSet);
   FD_SET(mySockFD, &currSet);
@@ -83,22 +84,22 @@ void UDPListener::listen() {
 
   while (listening()) {
     // Receive datagram from client...
-    int res = receiveWithTimeout(&currSet, myRequestInfo.pointWritableBuffer(), UDP_BUFFER_SIZE);
+    UDPDatagram& reqstDatagram = myRequestInfo.referWritableDatagram();
+    int res = receiveWithTimeout(&currSet, reqstDatagram.pointWritableBuffer(), UDP_BUFFER_SIZE);
     if (!(res > 0)) {
       if (res < 0) {
         perror("receiveWithTimeout()");
-        std::cerr << "[ERROR] Error receiving datagram!" << std::endl;
-      }
-      if (res == 0) {
-#ifdef DEBUG
-        std::cout << "[DEBUG] Timeout reached!" << std::endl;
+        std::cerr << RED << "[ERROR] Error receiving datagram!" << RESET << std::endl;
+      } else {  // res is equal to 0...
+#if defined(DEBUG) && VERBOSENESS > 2
+        std::cout << "[DEBUG] UDP timeout reached!" << std::endl; // TODO Take it back to debug output...
 #endif
       }
       currSet = nextSet;
       continue;
     }
 
-#ifdef DEBUG
+#if defined(DEBUG) && VERBOSENESS > 2
     std::cout << "[DEBUG] Datagram received!" << std::endl;
 #endif
     myRequestInfo.setFileDescriptor(mySockFD);

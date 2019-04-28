@@ -1,72 +1,67 @@
+#include <cassert>
 #include <iostream>
 #include "UDPResponse.h"
 #include "commons.h"
+#include "prettyprint.h"
 
 UDPResponse::UDPResponse(Manager& m):
-  myPayload(UDP_BUFFER_SIZE),
   myManager(m) {
-#ifdef DEBUG
+#if defined(DEBUG) && VERBOSENESS > 2
   std::cout << "[DEBUG] Constructing UDPResponse class..." << std::endl;
 #endif
 }
 
 UDPResponse::~UDPResponse() {
-#ifdef DEBUG
+#if defined(DEBUG) && VERBOSENESS > 2
   std::cout << "[DEBUG] Destructing UDPResponse class..." << std::endl;
 #endif
 }
 
-void UDPResponse::operator()(const RequestInfo& r) {
+void UDPResponse::operator()(RequestInfo& r) {
   struct sockaddr_in addrss = r.address();
   socklen_t addrssLen = r.addressLength();
   SocketFD sockFD = r.fileDescriptor();
 
-#ifdef DEBUG  // TODO
-  /*
-  std::cout << "Client socket: " << sockFD << std::endl;
-  std::cout << "Client address: " << inet_ntoa(addrss.sin_addr) << ":" << ntohs(addrss.sin_port) << std::endl;
-  std::cout << "Address length: " << addrssLen << std::endl;
-  */
-#endif
+  const UDPDatagram& reqstDatagram = r.referDatagram();
 
-  const Buffer b = r.buffer();
-  Byte* bp = static_cast<Byte*>(myPayload.pointWritableBuffer());
-  for (int i = 0; i < b.size(); i++) {  // Copy the RequestInfo buffer to UDPDatagram...
-    bp[i] = b[i];
-  }
+  if (reqstDatagram.header() == AUDIO_STREAM_DATA) {
+    StreamClient::Token t = reqstDatagram.token();
+    StreamClient::TID tid = reqstDatagram.tid();
+    StreamClient::TID storedTID = myManager.getClientTID(t);
+    if (storedTID < 0) {
+      std::cerr << RED << "[ERROR] TID not found!" << RESET << std::endl;
+      return;
+    }
+    //assert(!(lastTID < 0)); // XXX When a client send to TCP node the disconnection request, the UDP node can still have some packets from that client on queue. Assertion, then is not valid: a client can have been just disconnected but the last UDP packet is computed right now!
 
-  if (myPayload.header() == AUDIO_STREAM_DATA) {
-    StreamClient::Token t = myPayload.token();
-    StreamClient::TID tid = myPayload.tid();
-    StreamClient::TID lastTID = myManager.getClientTID(t);
-
-    if (tid > lastTID) {
-      AudioVector toClient;
-      {
-        std::lock_guard<std::mutex> l(myMutex);
-        myManager.updateClientTID(t, tid);  // XXX MULTITHREADING CAN CREATE ASYNCRONIZATION BETWEEN WHEN THE ID IS READ AND WHEN IT IS UPDATED!
-        // MUTEX ADDED!
-        // Save stream from client...
-        myManager.updateClientStream(t, myPayload.streamCopy());
-        // Build a new datagram and send it to client...
-        toClient = myManager.getOtherClientStreams(t);
+    if (tid > storedTID) {
+      AudioVector toClient(AUDIO_VECTOR_SIZE, 0.0); // XXX Initialization should not be necessary!
+      // TODO Check it!
+      if (myManager.updateClientTID(t, tid) < 0) {
+        std::cerr << RED << "[ERROR] Error updating client TID!" << RESET << std::endl;
+        return;
       }
-      myPayload.buildAudioStream(toClient, t, tid);
-      int bytes = ::sendto(sockFD, (const char*) myPayload.rawBuffer(), UDP_BUFFER_SIZE, 0, (const struct sockaddr*) &addrss, addrssLen);
+      AudioVector fromClient = reqstDatagram.streamCopy();
+      if (myManager.updateClientStream(t, fromClient) < 0) {  // Save stream from client...
+        std::cerr << RED << "[ERROR] Error updating client stream!" << RESET << std::endl;
+        return;
+      }
+      toClient = myManager.getOtherClientStreams(t);  // Build a new datagram and send it to client...
+      // Use another reference to the same object to change its content...
+      UDPDatagram& writableReqstDatagram = r.referWritableDatagram();
+      writableReqstDatagram.buildAudioStream(toClient, t, tid);
+      // Use the constant referece to object in order to send the datagram to client...
+      int bytes = ::sendto(sockFD, (const char*) reqstDatagram.rawBuffer(), UDP_BUFFER_SIZE, 0, (const struct sockaddr*) &addrss, addrssLen);
       if (bytes < 0) {
         perror("send");
       }
     } else {
-#ifdef DEBUG
-      std::cout << "[DEBUG] Not consistent ID comparison!" << std::endl;
-#endif
-      {
-        std::lock_guard<std::mutex> l(myMutex);
-        myManager.clearClientStream(t);
-      }
+      std::cerr << RED << "[ERROR] Not consistent TID comparison!" << RESET << std::endl;
+      myManager.clearClientStream(t); // TODO Check it
     }
 
   } else {
-    std::cerr << "[ERROR] Not consistent header of UDP datagram!" << std::endl;
+    std::cerr << RED << "[ERROR] Not consistent header of UDP datagram!" << RESET << std::endl;
   }
+
 }

@@ -3,15 +3,15 @@
 #include "UDPDatagram.h"
 #include "commons.h"
 
-UDPDatagram::UDPDatagram(MaxSize s):
-  Payload(s) {
-#ifdef DEBUG
+UDPDatagram::UDPDatagram(MaxSize ms):
+  Payload(ms) {
+#if defined(DEBUG) && VERBOSENESS > 2
   std::cout << "[DEBUG] Constructing UDPDatagram class..." << std::endl;
 #endif
 }
 
 UDPDatagram::~UDPDatagram() {
-#ifdef DEBUG
+#if defined(DEBUG) && VERBOSENESS > 2
   std::cout << "[DEBUG] Destructing UDPDatagram class..." << std::endl;
 #endif
 }

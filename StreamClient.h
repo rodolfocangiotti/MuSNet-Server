@@ -2,27 +2,35 @@
 #define STREAM_CLIENT_H
 
 #include <cstdint>
+#include <map>
 #include <vector>
 #include "types.h"
 
 class StreamClient {
 public:
-  typedef uint16_t Token;
-  typedef uint32_t TID;
+  typedef int16_t Token;
+  typedef int32_t TID;
   // ********************
   StreamClient(Token t);
   ~StreamClient();
   // ********************
-  const AudioVector& audioVector() const;
   Token token() const;
   TID tid() const;
   // ********************
-  void* pointWritableVector();
   void clearVector();
-  void updateVector(AudioVector v);
+  AudioVector readVector(Token t);
+  void writeVector(AudioVector& v);
   void updateTID(TID tid);
+  // ********************
+  int addReader(Token t);
+  int removeReader(Token t);
 private:
-  AudioVector myAudioVect;
+  typedef AudioVector AudioBuffer;  // Local alias of AudioVector...
+  typedef uint64_t Index;
+  typedef std::map<Token, Index> AccessManager;
+  AudioBuffer myBuff;
+  AccessManager myReaders;
+  Index myIndx;
   TID myTID;  // Transaction identifier...
   Token myToken;
 };

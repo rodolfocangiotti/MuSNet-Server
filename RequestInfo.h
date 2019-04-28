@@ -4,28 +4,31 @@
 #include <arpa/inet.h>
 #include <cstdint>
 #include <vector>
+#include "UDPDatagram.h"
 #include "types.h"
 
 class RequestInfo {
 public:
   typedef uint64_t BufferSize;
+  // ********************
   RequestInfo(BufferSize bs);
   ~RequestInfo();
   // ********************
-  void* pointWritableBuffer();
   void setAddress(const struct sockaddr_in* addrss, const socklen_t* addrssLen);
   void setFileDescriptor(SocketFD s);
   // ********************
   struct sockaddr_in address() const;
   socklen_t addressLength() const;
-  const Buffer& buffer() const;
   SocketFD fileDescriptor() const;
+  // ********************
+  const UDPDatagram& referDatagram() const;
+  UDPDatagram& referWritableDatagram();
 private:
   struct sockaddr_in myAddrss;
   socklen_t myAddrssLen;
   SocketFD mySockFD;
   // ********************
-  Buffer myBuff;
+  UDPDatagram myDatagram;
 };
 
 #endif

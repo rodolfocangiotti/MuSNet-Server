@@ -13,7 +13,6 @@ public:
   // ********************
   Payload(MaxSize ms);
   ~Payload();
-  Payload(const Payload& other) = delete; // TODO Test copy constructor...
   // ********************
   const Buffer& buffer() const;
   const void* rawBuffer() const;

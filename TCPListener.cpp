@@ -3,29 +3,30 @@
 #include <iostream>
 #include "TCPListener.h"
 #include "commons.h"
+#include "prettyprint.h"
 
 TCPListener::TCPListener(Manager& m):
   mySockFD(0),
   myAddrss(), clieAddrss(),
   myAddrssLen(), clieAddrssLen(),
-  myPayload(TCP_BUFFER_SIZE),
+  mySegment(TCP_BUFFER_SIZE),
   myManager(m),
   active(false),
   myMutex(),
   myThread() {
-#ifdef DEBUG
+#if defined(DEBUG) && VERBOSENESS > 2
   std::cout << "[DEBUG] Constructing TCPListener class..." << std::endl;
 #endif
 }
 
 TCPListener::~TCPListener() {
-#ifdef DEBUG
+#if defined(DEBUG) && VERBOSENESS > 2
   std::cout << "[DEBUG] Destructing TCPListener class..." << std::endl;
 #endif
 }
 
 void TCPListener::initSocket() {
-#ifdef DEBUG
+#if defined(DEBUG) && VERBOSENESS > 1
   std::cout << "[DEBUG] Initializing TCPListener socket..." << std::endl;
 #endif
   if ((mySockFD = socket(PF_INET, SOCK_STREAM, 0)) < 0) { // Create socket file descriptor for TCP protocol...
@@ -52,7 +53,7 @@ void TCPListener::bindSocket(const PortNum pn) {
     exit(EXIT_FAILURE);
     //throw TCPListenerException("Socket bind failed.");
   }
-#ifdef DEBUG
+#if defined(DEBUG) && VERBOSENESS > 1
   if (getsockname(mySockFD, (struct sockaddr*) &myAddrss, &myAddrssLen) < 0) {
     perror("getsockname()");
     exit(EXIT_FAILURE);
@@ -85,18 +86,17 @@ void TCPListener::listen() {
   struct timeval timeout = {1, 0}; // Define a timeout of 1 second...
   while (listening()) {
     // Receive segment from client...
-#ifdef DEBUG
-    std::cout << ">>> Current max. file descr.: " << currMaxFD << std::endl;  // TODO Remove it!
-#endif
     int descrAmount = select(currMaxFD + 1, &currSet, NULL, NULL, &timeout);
     if (!(descrAmount > 0)) {
       if (descrAmount < 0) {
         perror("select()");
-      }
-#ifdef DEBUG
-      std::cout << "[DEBUG] Error receiving segment or timeout reached!" << std::endl;
+        std::cerr << RED << "[ERROR] Error receiving request/segment!" << RESET << std::endl;
+      } else {  // descrAmount is equal to 0...
+#if defined(DEBUG) && VERBOSENESS > 2
+        std::cout << "[DEBUG] TCP timeout reached!" << std::endl;
 #endif
-      currSet = nextSet;  // WTF?
+      }
+      currSet = nextSet;
       continue;
     }
     // ***** SOCKET ITERATION BLOCK ******
@@ -108,8 +108,8 @@ void TCPListener::listen() {
             perror("accept()");
             continue;
           }
-#ifdef DEBUG
-          std::cout << "New TCP connection accepted!" << std::endl;
+#if defined(DEBUG) && VERBOSENESS > 0
+          std::cout << "[DEBUG] New TCP connection accepted!" << std::endl;
 #endif
           FD_SET(newSockFD, &nextSet);
           if (newSockFD > currMaxFD) {
@@ -117,13 +117,15 @@ void TCPListener::listen() {
           }
         } else {
           // ***** RECEIVE BLOCK *****
-          int bytes = receive(i, myPayload.pointWritableBuffer(), TCP_BUFFER_SIZE);
+          int bytes = receive(i, mySegment.pointWritableBuffer(), TCP_BUFFER_SIZE);
           if (bytes < 0 ) {
             perror("recv()");
           } else if (bytes == 0) {  // Client is disconnected...
             shutdown(SHUT_RDWR, i);
             close(i);
-            std::cout << "TCP connection closed!" << std::endl;
+#if defined(DEBUG) && VERBOSENESS > 0
+            std::cout << "[DEBUG] TCP connection closed!" << std::endl;
+#endif
             FD_CLR(i, &nextSet);
             if (i == currMaxFD) {
               for (int j = 0; j < currMaxFD; j++) { // Update maximum file descriptor value...
@@ -134,18 +136,26 @@ void TCPListener::listen() {
             }
           } else {
             // Manage received message
-            if (myPayload.header() == ENTRY_REQUEST) {
+            if (mySegment.header() == ENTRY_REQUEST) {
               StreamClient::Token t = myManager.addClient();
-              myPayload.buildEntryResponse(t);
-            } else if (myPayload.header() == EXIT_REQUEST) {
-              StreamClient::Token t = myPayload.token();
-              myManager.removeClient(t);
-              myPayload.buildExitResponse();
+              if (t < 0) {
+                std::cerr << RED << "[ERROR] Impossible to add client!" << RESET << std::endl;
+                continue;
+              }
+              mySegment.buildEntryResponse(t);
+            } else if (mySegment.header() == EXIT_REQUEST) {
+              StreamClient::Token t = mySegment.token();
+              int res = myManager.removeClient(t);
+              if (res < 0) {
+                std::cerr << RED << "[ERROR] Impossible to remove client!" << RESET << std::endl;
+                continue;
+              }
+              mySegment.buildExitResponse();
             } else {
-              std::cerr << "[ERROR] Not consistent header of TCP segment!" << std::endl;
+              std::cerr << RED << "[ERROR] Not consistent header of TCP segment!" << RESET << std::endl;
               continue;
             }
-            int bytes = send(i, myPayload.rawBuffer(), myPayload.size());
+            int bytes = send(i, mySegment.rawBuffer(), mySegment.size());
             if (bytes < 0) {
               perror("send");
             }

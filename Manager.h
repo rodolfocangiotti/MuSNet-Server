@@ -17,10 +17,10 @@ public:
   StreamClient::TID getClientTID(StreamClient::Token t);
   // ********************
   StreamClient::Token addClient();
-  void removeClient(StreamClient::Token t);
-  void updateClientTID(StreamClient::Token t, StreamClient::TID i);
-  void updateClientStream(StreamClient::Token t, AudioVector v);
-  void clearClientStream(StreamClient::Token t);
+  int removeClient(StreamClient::Token t);
+  int updateClientTID(StreamClient::Token t, StreamClient::TID i);
+  int updateClientStream(StreamClient::Token t, AudioVector& v);
+  int clearClientStream(StreamClient::Token t);
 private:
   void debugPrint();
   StreamClient::Token myTokenHist;

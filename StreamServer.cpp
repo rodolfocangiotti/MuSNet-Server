@@ -7,14 +7,14 @@ StreamServer::StreamServer():
   myUDPThrds(myUDPResp),
   myTCPListnr(myManager),
   myUDPListnr(myUDPThrds) {
-#ifdef DEBUG
+#if defined(DEBUG) && VERBOSENESS > 2
   std::cout << "[DEBUG] Constructing StreamServer class..." << std::endl;
 #endif
 }
 
 StreamServer::~StreamServer() {
   stop();
-#ifdef DEBUG
+#if defined(DEBUG) && VERBOSENESS > 2
   std::cout << "[DEBUG] Constructing StreamServer class..." << std::endl;
 #endif
 }
@@ -35,15 +35,15 @@ void StreamServer::start() {
 
 void StreamServer::stop() {
   if (active) {
-#ifdef DEBUG
+#if defined(DEBUG) && VERBOSENESS > 1
     std::cout << "[DEBUG] Stopping TCP listener..." << std::endl;
 #endif
     myTCPListnr.stop();
-#ifdef DEBUG
+#if defined(DEBUG) && VERBOSENESS > 1
     std::cout << "[DEBUG] Stopping UDP listener..." << std::endl;
 #endif
     myUDPListnr.stop();
-#ifdef DEBUG
+#if defined(DEBUG) && VERBOSENESS > 1
     std::cout << "[DEBUG] Stopping thread pool..." << std::endl;
 #endif
     myUDPThrds.stop();

@@ -12,6 +12,7 @@ class TCPListener {
 public:
   TCPListener(Manager& m);
   ~TCPListener();
+  // ********************
   void configure(const PortNum pn);
   void start();
   void stop();
@@ -29,7 +30,7 @@ private:
   struct sockaddr_in myAddrss, clieAddrss;
   socklen_t myAddrssLen, clieAddrssLen;
   // ********************
-  TCPSegment myPayload;
+  TCPSegment mySegment;
   Manager& myManager;
   // ********************
   bool active;
