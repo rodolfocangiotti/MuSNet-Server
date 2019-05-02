@@ -39,7 +39,7 @@ AudioVector UDPDatagram::streamCopy() const { // This method returns a copy of t
   const StreamSize* ssp = reinterpret_cast<const StreamSize*>(bp);
   bp = &(myBuff[9]);
   const AudioSample* asp = reinterpret_cast<const AudioSample*>(bp);
-  AudioVector v(*ssp);
+  AudioVector v(*ssp, 0.0);
   for (int i = 0; i < v.size(); i++) {
     v[i] = asp[i];
   }

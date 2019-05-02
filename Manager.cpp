@@ -61,11 +61,13 @@ int Manager::removeClient(StreamClient::Token t) {
 AudioVector Manager::getOtherClientStreams(StreamClient::Token t) {
   std::lock_guard<std::mutex> l(myMutex);
   AudioVector v(AUDIO_VECTOR_SIZE * NUM_CHANNELS, 0.0);
+  assert(v.capacity() == v.size());
   for (int i = 0; i < myClients.size(); i++) {
     if (myClients[i].token() == t) {
       continue; // Skip current client stream...
     }
     AudioVector o = myClients[i].readVector(t);
+    assert(o.capacity() == o.size());
     for (int j = 0; j < v.size(); j++) {
       v[j] += o[j];
     }

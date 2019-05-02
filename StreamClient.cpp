@@ -40,6 +40,7 @@ void StreamClient::clearVector() {
 
 AudioVector StreamClient::readVector(Token t) {
   AudioVector v(AUDIO_VECTOR_SIZE * NUM_CHANNELS, 0.0);
+  assert(v.capacity() == v.size());
   if (!(myReaders.count(t) > 0)) {
     std::cerr << RED << "[ERROR] Not found read permission for client " << t << "for the buffer of client " << myToken << "!" << RESET << std::endl;
     return v;
@@ -93,6 +94,6 @@ int StreamClient::removeReader(Token t) {
       return 0;
     }
   }
-  std::cerr << RED << "[ERROR] Imposttible to remove reader (token not found)!" << RESET << std::endl;
+  std::cerr << RED << "[ERROR] Impossible to remove reader (token not found)!" << RESET << std::endl;
   return -1;
 }

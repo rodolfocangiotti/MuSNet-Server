@@ -14,6 +14,7 @@ public:
 private:
   void send(const void* buff, size_t s);
   Manager& myManager;
+  std::mutex myMutex;
 };
 
 #endif
