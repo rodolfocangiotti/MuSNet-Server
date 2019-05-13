@@ -2,9 +2,10 @@
 #define STREAM_MANAGER_H
 
 #include <cstdint>
+#include <list>
 #include <mutex>
 #include <thread>
-#include <vector>
+//#include <vector>
 #include "StreamClient.h"
 #include "types.h"
 
@@ -20,10 +21,14 @@ public:
   ClientTID getClientResponseTID(ClientToken t);
   int updateClientStream(ClientToken t, ClientTID tid, AudioVector& v);
 private:
+  typedef std::list<StreamClient> ClientList;
+  // ********************
   void debugPrint();
-  ClientToken myTokenHist;
+  // ********************
+  ClientList myClients;
   std::mutex myMutex;
-  std::vector<StreamClient> myClients;
+  ClientToken myTokenHist;
+  //std::vector<StreamClient> myClients;
 };
 
 #endif

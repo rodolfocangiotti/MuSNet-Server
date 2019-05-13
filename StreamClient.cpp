@@ -4,26 +4,30 @@
 #include "commons.h"
 #include "prettyprint.h"
 
+bool comp(const StreamVector& a, const StreamVector& b) {
+  return a.tid() < b.tid();
+}
+
 StreamClient::StreamClient(const ClientToken t):
-  myBuff(AUDIO_BUFFER_SIZE / AUDIO_VECTOR_SIZE),
-  myLastRResp(0), myLastWReq(0),
-  myToken(t),
-  myRReqsts(), myWReqsts(1, 0) {
+  myQueue(),
+  myLastResp(0), //myLastWReq(0),
+  myToken(t), myReaders() {
+  //myRReqsts(), myWReqsts(1, 0) {
 #if defined(DEBUG) && VERBOSENESS > 2
   std::cout << "[DEBUG] Constructing StreamClient class..." << '\n';
 #endif
+  /*
   for (int i = 0; i < myBuff.size(); i++) {
     myBuff[i].setOwner(myToken);
     myBuff[i].setVID(i);
   }
-  /*
   myWReqsts.reserve(AUDIO_VECTOR_SIZE);
   myWReqsts.push_back(0); // Initialize vector with a default value...
 
   std::cout << "myWReqsts.size() at constructor: " << myWReqsts.size() << '\t';
   std::cout << "myWReqsts.capacity() at constructor: " << myWReqsts.capacity() << '\n';
   */
-  assert(myWReqsts.size() > 0);
+  //assert(myWReqsts.size() > 0);
 }
 
 StreamClient::~StreamClient() {
@@ -32,6 +36,7 @@ StreamClient::~StreamClient() {
 #endif
 }
 
+/*
 ClientTID StreamClient::maximumWriteTID() const {
   //std::cout << "Inside maximumWriteTID()..." << '\n';
   return myWReqsts.front();
@@ -41,36 +46,36 @@ ClientTID StreamClient::minimumWriteTID() const {
   /*
   std::cout << "Inside minimumWriteTID()..." << '\t' << "Client token: " << myToken << '\n';
   assert(myWReqsts.size() > 0);
-  */
+  //
   return myWReqsts.back();
 }
+*/
 
 ClientToken StreamClient::token() const {
   return myToken;
 }
 
+
 ClientTID StreamClient::getNewResponseTID() {
-  return ++myLastRResp;
+  return ++myLastResp;
 }
 
 int StreamClient::addReader(ClientToken ot) {
-  myRReqsts[ot] = minimumWriteTID() - 1; // TODO Check it!
-  for (int i = 0; i < myBuff.size(); i++) {
-    myBuff[i].addReader(ot);
+  myReaders.push_back(ot);
+  for (StreamQueue::iterator sv = myQueue.begin(); sv != myQueue.end(); sv++) {
+    sv->addReadPermission(ot);
   }
 #if defined(DEBUG) && VERBOSENESS > 0
   std::cout << "[DEBUG] Added reader " << ot << " for client " << myToken << "..." << '\n';
-  std::cout << "At TID " << static_cast<int>(myRReqsts[ot]) << " while min. max. are " << static_cast<int>(minimumWriteTID()) << " " << static_cast<int>(minimumWriteTID()) << '\n';
-  debugPrintReadStatus();
 #endif
   return 0; // TODO Add error management, returning -1...
 }
 
 int StreamClient::removeReader(ClientToken ot) {
   bool found = false;
-  for (ReadHistory::iterator i = myRReqsts.begin(); i != myRReqsts.end(); i++) {
-    if (i->first == ot) {
-      myRReqsts.erase(i);
+  for (ReadManager::iterator t = myReaders.begin(); t != myReaders.end(); t++) {
+    if (*t == ot) {
+      myReaders.erase(t);
       found = true;
     }
   }
@@ -78,8 +83,8 @@ int StreamClient::removeReader(ClientToken ot) {
     std::cerr << RED << "[ERROR] Impossible to remove reader (token not found)!" << RESET << '\n';
     return -1;
   }
-  for (int i = 0; i < myBuff.size(); i++) {
-    myBuff[i].removeReader(ot);
+  for (StreamQueue::iterator sv = myQueue.begin(); sv != myQueue.end(); sv++) {
+    sv->removeReadPermission(ot);
   }
 #if defined(DEBUG) && VERBOSENESS > 0
   std::cout << "[DEBUG] Removed reader " << ot << " for client " << myToken << "..." << '\n';
@@ -87,6 +92,7 @@ int StreamClient::removeReader(ClientToken ot) {
   return 0;
 }
 
+/*
 AudioVector StreamClient::readVector(ClientToken ot) {
   AudioVector v(AUDIO_VECTOR_SIZE * NUM_CHANNELS, 0.0);
   if (!(myRReqsts.count(ot) > 0)) {
@@ -104,6 +110,7 @@ AudioVector StreamClient::readVector(ClientToken ot) {
   return v;
 }
 
+
 void StreamClient::writeVector(ClientToken mt, ClientTID wtid, AudioVector& v) {
   assert(mt == myToken);
   assert(wtid != myLastWReq);
@@ -116,7 +123,45 @@ void StreamClient::writeVector(ClientToken mt, ClientTID wtid, AudioVector& v) {
   sv.write(v);
   updateWriteHistory(wtid);
 }
+*/
 
+void StreamClient::insertVector(ClientToken mt, ClientTID wtid, AudioVector& v) {
+  assert(mt == myToken);
+  if (myReaders.size() > 0) {
+    StreamVector sv;
+    sv.setTID(wtid);
+    sv.setAudioVector(v);
+    for (ReadManager::iterator t = myReaders.begin(); t != myReaders.end(); t++) {
+      sv.addReadPermission(*t);
+    }
+    myQueue.push_back(sv);
+    myQueue.sort(comp);
+  }
+}
+
+AudioVector StreamClient::retrieveVector(ClientToken ot) {
+  AudioVector v(AUDIO_VECTOR_SIZE * NUM_CHANNELS, 0.0);
+  bool found;
+  for (StreamQueue::iterator sv = myQueue.begin(); sv != myQueue.end(); sv++) {
+    if (sv->isReadableBy(ot)) {
+      found = true;
+      v = sv->readVector(ot);
+      if (sv->isDeletable()) {
+#if defined(DEBUG) && VERBOSENESS > 0
+        std::cout << "[DEBUG] Deleting vector from queue..." << '\n';
+#endif
+        myQueue.erase(sv);
+      }
+      break;
+    }
+  }
+  if (!(found)) {
+    std::cerr << RED << "[ERROR] No readable vectors on queue!" << RESET << '\n';
+  }
+  return v;
+}
+
+/*
 void StreamClient::debugPrintReadStatus() {
   std::cout << CYAN << "Client " << myToken << " has the following read histo: " << '\n';
   for (ReadHistory::iterator i = myRReqsts.begin(); i != myRReqsts.end(); i++) {
@@ -124,6 +169,7 @@ void StreamClient::debugPrintReadStatus() {
   }
   std::cout << RESET << '\n';
 }
+
 
 void StreamClient::debugPrintVIDLimits(ClientVID vid) {
   static ClientVID maxVID = 0;  // TODO Remove these static variables for debug purpose only...
@@ -157,3 +203,4 @@ void StreamClient::updateWriteHistory(ClientTID wtid) {
   }
   assert(myWReqsts.size() > 0);
 }
+*/

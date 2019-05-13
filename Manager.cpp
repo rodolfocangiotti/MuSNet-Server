@@ -6,6 +6,7 @@
 
 Manager::Manager():
   myClients(),
+  myMutex(),
   myTokenHist(0) {
 #if defined(DEBUG) && VERBOSENESS > 2
   std::cout << "[DEBUG] Destructing Manager class..." << '\n';
@@ -21,12 +22,21 @@ Manager::~Manager() {
 ClientToken Manager::addClient() {
   std::lock_guard<std::mutex> l(myMutex);
   ClientToken t = ++myTokenHist;
+  /*
   myClients.emplace_back(StreamClient(t));
   for (int i = 0; i < myClients.size() - 1; i++) {
     myClients[i].addReader(t);
     ClientToken u = myClients[i].token();
     myClients[myClients.size() - 1].addReader(u);
   }
+  */
+  StreamClient nsc = StreamClient(t);
+  for (ClientList::iterator sc = myClients.begin(); sc != myClients.end(); sc++) {
+    sc->addReader(t);
+    ClientToken ot = sc->token();
+    nsc.addReader(ot);
+  }
+  myClients.push_back(nsc);
 #if defined(DEBUG) && VERBOSENESS > 0
   std::cout << GREEN << "[DEBUG] Added new client with token: " << t << RESET << '\n';
   debugPrint();
@@ -37,10 +47,10 @@ ClientToken Manager::addClient() {
 int Manager::removeClient(ClientToken t) {
   std::lock_guard<std::mutex> l(myMutex);
   bool found = false;
-  for (int i = 0; i < myClients.size(); i++) {  // Check if there is a client connected with the argument token...
-    if (myClients[i].token() == t) {
+  for (ClientList::iterator sc = myClients.begin(); sc != myClients.end(); sc++) {  // Check if there is a client connected with the argument token...
+    if (sc->token() == t) {
       found = true;
-      myClients.erase(myClients.begin() + i);
+      myClients.erase(sc);
 #if defined(DEBUG) && VERBOSENESS > 0
       std::cout << GREEN << "[DEBUG] Removed client with token: " << t << RESET << '\n';
       debugPrint();
@@ -52,8 +62,8 @@ int Manager::removeClient(ClientToken t) {
     std::cerr << RED << "[ERROR] Impossible to remove client (token not found)!" << RESET << '\n';
     return -1;
   }
-  for (int i = 0; i < myClients.size(); i++) {  // If client has successfully been removed, remove read permissions from other clients' register...
-    myClients[i].removeReader(t);
+  for (ClientList::iterator sc = myClients.begin(); sc != myClients.end(); sc++) {  // If client has successfully been removed, remove read permissions from other clients' register...
+    sc->removeReader(t);
   }
   return 0;
 }
@@ -62,11 +72,11 @@ AudioVector Manager::getOtherClientStreams(ClientToken t) {
   // DONE
   std::lock_guard<std::mutex> l(myMutex);
   AudioVector v(AUDIO_VECTOR_SIZE * NUM_CHANNELS, 0.0);
-  for (int i = 0; i < myClients.size(); i++) {
-    if (myClients[i].token() == t) {
+  for (ClientList::iterator sc = myClients.begin(); sc != myClients.end(); sc++) {
+    if (sc->token() == t) {
       continue; // Skip current client stream...
     }
-    AudioVector o = myClients[i].readVector(t);
+    AudioVector o = sc->retrieveVector(t);
     for (int j = 0; j < v.size(); j++) {
       v[j] += o[j];
     }
@@ -77,9 +87,9 @@ AudioVector Manager::getOtherClientStreams(ClientToken t) {
 ClientTID Manager::getClientResponseTID(ClientToken t) {
   // DONE
   std::lock_guard<std::mutex> l(myMutex);
-  for (int i = 0; i < myClients.size(); i++) {
-    if (myClients[i].token() == t) {
-      return myClients[i].getNewResponseTID();
+  for (ClientList::iterator sc = myClients.begin(); sc != myClients.end(); sc++) {
+    if (sc->token() == t) {
+      return sc->getNewResponseTID();
     }
   }
   std::cerr << RED << "[ERROR] Impossible to get client response TID (token not found)!" << RESET << '\n';
@@ -89,9 +99,9 @@ ClientTID Manager::getClientResponseTID(ClientToken t) {
 int Manager::updateClientStream(ClientToken t, ClientTID tid, AudioVector& v) {
   // DONE
   std::lock_guard<std::mutex> l(myMutex);
-  for (int i = 0; i < myClients.size(); i++) {
-    if (myClients[i].token() == t) {
-      myClients[i].writeVector(t, tid, v);
+  for (ClientList::iterator sc = myClients.begin(); sc != myClients.end(); sc++) {
+    if (sc->token() == t) {
+      sc->insertVector(t, tid, v);
       return 0;
     }
   }
@@ -101,7 +111,8 @@ int Manager::updateClientStream(ClientToken t, ClientTID tid, AudioVector& v) {
 
 void Manager::debugPrint() {
   std::cout << CYAN << myClients.size() << " connected!" << RESET << '\n';
-  for (int i = 0; i < myClients.size(); i++) {
-    std::cout << CYAN << "Client " << i << " uses token " << myClients[i].token() << RESET << '\n';
+  int i = 1;
+  for (ClientList::iterator sc = myClients.begin(); sc != myClients.end(); sc++) {
+    std::cout << CYAN << "Client n." << i++ << " uses token " << sc->token() << RESET << '\n';
   }
 }
