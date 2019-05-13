@@ -6,22 +6,22 @@
 
 template <typename T>
 ThreadPool<T>::ThreadPool(T& t):
-  myThrdCounter(0),
   myTask(t),
-  running(false),
   myCondVar(),
   myMutex(),
   myQueue(),
-  myThreads(NUM_THREADS) {
+  myThreads(NUM_THREADS),
+  running(false),
+  myThrdCounter(0) {
 #if defined(DEBUG) && VERBOSENESS > 2
-  std::cout << "[DEBUG] Constructing ThreadPool class..." << std::endl;
+  std::cout << "[DEBUG] Constructing ThreadPool class..." << '\n';
 #endif
 }
 
 template <typename T>
 ThreadPool<T>::~ThreadPool() {
 #if defined(DEBUG) && VERBOSENESS > 2
-  std::cout << "[DEBUG] Destructing ThreadPool class..." << std::endl;
+  std::cout << "[DEBUG] Destructing ThreadPool class..." << '\n';
 #endif
   stop();
 }
@@ -78,7 +78,7 @@ void ThreadPool<T>::thread() {
           continue;
         } else {
 #if defined(DEBUG) && VERBOSENESS > 1
-          std::cout << "[DEBUG] Exiting thread n. " << thrdNum << "..." << std::endl;
+          std::cout << "[DEBUG] Exiting thread n. " << thrdNum << "..." << '\n';
 #endif
           break;
         }
@@ -88,7 +88,7 @@ void ThreadPool<T>::thread() {
       // TODO Add here a proper code block if a queue limit is necessary...
     }
 #if defined(DEBUG) && VERBOSENESS > 2
-    std::cout << "Thread n." << thrdNum << " is computing request " << r.referDatagram().token() << "-" << r.referDatagram().tid() << " (token-TID)." << std::endl;
+    std::cout << "Thread n." << thrdNum << " is computing request " << r.referDatagram().token() << "-" << r.referDatagram().tid() << " (token-TID)." << '\n';
 #endif
     myTask(r);  // Do the task, passing it the request informations...
   }

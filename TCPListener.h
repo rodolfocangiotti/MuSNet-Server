@@ -1,5 +1,5 @@
-#ifndef TCP_LISTENER
-#define TCP_LISTENER
+#ifndef TCP_LISTENER_H
+#define TCP_LISTENER_H
 
 #include <arpa/inet.h>
 #include <thread>
@@ -7,6 +7,15 @@
 #include "Manager.h"
 #include "TCPSegment.h"
 #include "types.h"
+
+class TCPListenerException: public std::exception {
+public:
+  TCPListenerException(const std::string e) noexcept;
+  virtual ~TCPListenerException();
+  virtual const char* what() const noexcept;
+private:
+  std::string error;
+};
 
 class TCPListener {
 public:
@@ -30,8 +39,8 @@ private:
   struct sockaddr_in myAddrss, clieAddrss;
   socklen_t myAddrssLen, clieAddrssLen;
   // ********************
-  TCPSegment mySegment;
   Manager& myManager;
+  TCPSegment mySegment;
   // ********************
   bool active;
   std::mutex myMutex;

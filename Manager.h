@@ -13,17 +13,15 @@ public:
   Manager();
   ~Manager();
   // ********************
-  AudioVector getOtherClientStreams(StreamClient::Token t);
-  StreamClient::TID getClientTID(StreamClient::Token t);
+  ClientToken addClient();
+  int removeClient(ClientToken t);
   // ********************
-  StreamClient::Token addClient();
-  int removeClient(StreamClient::Token t);
-  int updateClientTID(StreamClient::Token t, StreamClient::TID i);
-  int updateClientStream(StreamClient::Token t, AudioVector& v);
-  int clearClientStream(StreamClient::Token t);
+  AudioVector getOtherClientStreams(ClientToken t);
+  ClientTID getClientResponseTID(ClientToken t);
+  int updateClientStream(ClientToken t, ClientTID tid, AudioVector& v);
 private:
   void debugPrint();
-  StreamClient::Token myTokenHist;
+  ClientToken myTokenHist;
   std::mutex myMutex;
   std::vector<StreamClient> myClients;
 };

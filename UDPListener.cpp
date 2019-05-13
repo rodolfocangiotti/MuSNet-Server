@@ -5,6 +5,20 @@
 #include "commons.h"
 #include "prettyprint.h"
 
+UDPListenerException::UDPListenerException(const std::string e) noexcept:
+  error(e) {
+  error.insert(0, "[ERROR] UDPListenerException: ");
+  // TODO
+}
+
+UDPListenerException::~UDPListenerException() {
+  // TODO
+}
+
+const char* UDPListenerException::what() const noexcept {
+  return error.c_str();
+}
+
 UDPListener::UDPListener(ThreadPool<UDPResponse>& tp):
   mySockFD(0),
   myAddrss(), clieAddrss(),
@@ -12,36 +26,34 @@ UDPListener::UDPListener(ThreadPool<UDPResponse>& tp):
   myTimeout(),
   myRequestInfo(UDP_BUFFER_SIZE),
   myThreadPool(tp),
+  active(false),
   myMutex(),
-  myThread(),
-  active(false) {
+  myThread() {
 #if defined(DEBUG) && VERBOSENESS > 2
-  std::cout << "[DEBUG] Constructing UDPListener class..." << std::endl;
+  std::cout << "[DEBUG] Constructing UDPListener class..." << '\n';
 #endif
 }
 
 UDPListener::~UDPListener() {
+#if defined(DEBUG) && VERBOSENESS > 2
+  std::cout << "[DEBUG] Destructing UDPListener class..." << '\n';
+#endif
   stop(); // Make sure the listening is stopped...
   close(mySockFD);
-#if defined(DEBUG) && VERBOSENESS > 2
-  std::cout << "[DEBUG] Destructing UDPListener class..." << std::endl;
-#endif
 }
 
 void UDPListener::initSocket() {
 #if defined(DEBUG) && VERBOSENESS > 1
-  std::cout << "[DEBUG] Initializing UDPListener socket..." << std::endl;
+  std::cout << "[DEBUG] Initializing UDPListener socket..." << '\n';
 #endif
   if ((mySockFD = socket(PF_INET, SOCK_DGRAM, 0)) < 0) { // Create socket file descriptor for UDP protocol...
     perror("socket()");
-    exit(EXIT_FAILURE);
-    //throw UDPListenerException("Socket creation failed.");
+    throw UDPListenerException("Socket creation failed.");
   }
   int enable = 1;
   if (setsockopt(mySockFD, SOL_SOCKET, SO_REUSEADDR, (const char*) &enable, sizeof enable) < 0) { // TODO Check if SO_REUSEADDR is okay...
     perror("setsockopt()");
-    exit(EXIT_FAILURE);
-    //throw UDPListenerException("Socket options setting failed.");
+    throw UDPListenerException("Socket option setting failed.");
   }
 }
 
@@ -52,15 +64,14 @@ void UDPListener::bindSocket(PortNum pn) {
   myAddrssLen = sizeof myAddrss;
   if (bind(mySockFD, (const struct sockaddr*) &myAddrss, myAddrssLen) < 0) {  // Bind the socket with the client address...
     perror("bind()");
-    exit(EXIT_FAILURE);
-    //throw UDPListenerException("Socket bind failed.");
+    throw UDPListenerException("Socket bind failed.");
   }
 #if defined(DEBUG) && VERBOSENESS > 1
   if (getsockname(mySockFD, (struct sockaddr*) &myAddrss, &myAddrssLen) < 0) {
     perror("getsockname()");
-    exit(EXIT_FAILURE);
+  } else {
+    std::cout << "[DEBUG] Socket bound on " << inet_ntoa(myAddrss.sin_addr) << ":" << ntohs(myAddrss.sin_port) << "..." << '\n'; // TODO Convert to warning or info?
   }
-  std::cout << "[DEBUG] Socket bound on " << inet_ntoa(myAddrss.sin_addr) << ":" << ntohs(myAddrss.sin_port) << "..." << std::endl; // TODO Convert to warning or info?
 #endif
 }
 
@@ -89,10 +100,10 @@ void UDPListener::listen() {
     if (!(res > 0)) {
       if (res < 0) {
         perror("receiveWithTimeout()");
-        std::cerr << RED << "[ERROR] Error receiving datagram!" << RESET << std::endl;
+        std::cerr << RED << "[ERROR] Error receiving datagram!" << RESET << '\n';
       } else {  // res is equal to 0...
 #if defined(DEBUG) && VERBOSENESS > 2
-        std::cout << "[DEBUG] UDP timeout reached!" << std::endl; // TODO Take it back to debug output...
+        std::cout << "[DEBUG] UDP timeout reached!" << '\n'; // TODO Take it back to debug output...
 #endif
       }
       currSet = nextSet;
@@ -100,7 +111,7 @@ void UDPListener::listen() {
     }
 
 #if defined(DEBUG) && VERBOSENESS > 2
-    std::cout << "[DEBUG] Datagram received!" << std::endl;
+    std::cout << "[DEBUG] Datagram received!" << '\n';
 #endif
     myRequestInfo.setFileDescriptor(mySockFD);
     myRequestInfo.setAddress(&clieAddrss, &clieAddrssLen);
@@ -141,6 +152,7 @@ int UDPListener::receiveWithTimeout(fd_set* fds, void* buff, size_t s) {
   int descrAmount = select(mySockFD + 1, fds, NULL, NULL, &myTimeout);
   if (descrAmount > 0) {
     assert(FD_ISSET(mySockFD, fds));
+    assert(descrAmount == 1);
     return receive(buff, s);
   }
   return descrAmount;

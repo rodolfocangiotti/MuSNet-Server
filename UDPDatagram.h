@@ -3,7 +3,6 @@
 
 #include <cstdint>
 #include "Payload.h"
-#include "StreamClient.h"
 #include "commons.h"
 #include "types.h"
 
@@ -15,12 +14,12 @@ public:
   UDPDatagram(MaxSize ms);
   ~UDPDatagram();
   // ********************
-  StreamClient::Token token() const;
-  StreamClient::TID tid() const;
+  ClientToken token() const;
+  ClientTID tid() const;
   StreamSize streamSize() const;
   AudioVector streamCopy() const;
   // ********************
-  void buildAudioStream(AudioVector& v, StreamClient::Token t, StreamClient::TID tid);
+  void buildAudioStream(AudioVector& v, ClientToken t, ClientTID tid);
 };
 
 #endif

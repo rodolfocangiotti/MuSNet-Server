@@ -6,25 +6,25 @@
 UDPDatagram::UDPDatagram(MaxSize ms):
   Payload(ms) {
 #if defined(DEBUG) && VERBOSENESS > 2
-  std::cout << "[DEBUG] Constructing UDPDatagram class..." << std::endl;
+  std::cout << "[DEBUG] Constructing UDPDatagram class..." << '\n';
 #endif
 }
 
 UDPDatagram::~UDPDatagram() {
 #if defined(DEBUG) && VERBOSENESS > 2
-  std::cout << "[DEBUG] Destructing UDPDatagram class..." << std::endl;
+  std::cout << "[DEBUG] Destructing UDPDatagram class..." << '\n';
 #endif
 }
 
-StreamClient::Token UDPDatagram::token() const {
+ClientToken UDPDatagram::token() const {
   const Byte* bp = &(myBuff[1]);
-  const StreamClient::Token* tp = reinterpret_cast<const StreamClient::Token*>(bp);
+  const ClientToken* tp = reinterpret_cast<const ClientToken*>(bp);
   return *tp;
 }
 
-StreamClient::TID UDPDatagram::tid() const {
+ClientTID UDPDatagram::tid() const {
   const Byte* bp = &(myBuff[3]);
-  const StreamClient::TID* tidp = reinterpret_cast<const StreamClient::TID*>(bp);
+  const ClientTID* tidp = reinterpret_cast<const ClientTID*>(bp);
   return *tidp;
 }
 
@@ -46,16 +46,17 @@ AudioVector UDPDatagram::streamCopy() const { // This method returns a copy of t
   return v;
 }
 
-void UDPDatagram::buildAudioStream(AudioVector& v, StreamClient::Token t, StreamClient::TID tid) {
-  mySize = sizeof (Header) + sizeof (StreamClient::Token) + sizeof (StreamClient::TID) + sizeof (Size) + sizeof (AudioSample) * v.size();
+void UDPDatagram::buildAudioStream(AudioVector& v, ClientToken t, ClientTID tid) {
+  mySize = sizeof (Header) + sizeof (ClientToken) + sizeof (ClientTID) + sizeof (Size) + sizeof (AudioSample) * v.size();
+  assert(mySize <= myBuff.size());
   Byte* bp = &(myBuff[0]);
   Header* hp = static_cast<Header*>(bp);
   *hp = AUDIO_STREAM_DATA;
   bp = &(myBuff[1]);
-  StreamClient::Token* tp = reinterpret_cast<StreamClient::Token*>(bp);
+  ClientToken* tp = reinterpret_cast<ClientToken*>(bp);
   *tp = t;
   bp = &(myBuff[3]);
-  StreamClient::TID* tidp = reinterpret_cast<StreamClient::TID*>(bp);
+  ClientTID* tidp = reinterpret_cast<ClientTID*>(bp);
   *tidp = tid;
   bp = &(myBuff[7]);
   StreamSize* sp = reinterpret_cast<StreamSize*>(bp);

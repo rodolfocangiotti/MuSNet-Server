@@ -9,6 +9,15 @@
 #include "UDPResponse.h"
 #include "types.h"
 
+class UDPListenerException: public std::exception {
+public:
+  UDPListenerException(const std::string e) noexcept;
+  virtual ~UDPListenerException();
+  virtual const char* what() const noexcept;
+private:
+  std::string error;
+};
+
 class UDPListener {
 public:
   UDPListener(ThreadPool<UDPResponse>& tp);

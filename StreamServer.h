@@ -12,16 +12,17 @@ class StreamServer {
 public:
   StreamServer();
   ~StreamServer();
+  // ********************
   void configure(PortNum tcpPN, PortNum udpPN); // Set TCP and UDP port number for listening...
   void start();
   void stop();
 private:
   bool active;
   Manager myManager;
-  UDPResponse myUDPResp;
-  ThreadPool<UDPResponse> myUDPThrds;
   TCPListener myTCPListnr;
   UDPListener myUDPListnr;
+  UDPResponse myUDPResp;
+  ThreadPool<UDPResponse> myUDPThrds;
 };
 
 #endif

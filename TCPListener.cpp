@@ -5,60 +5,70 @@
 #include "commons.h"
 #include "prettyprint.h"
 
+TCPListenerException::TCPListenerException(const std::string e) noexcept:
+  error(e) {
+  error.insert(0, "[ERROR] TCPListenerException: ");
+  // TODO
+}
+
+TCPListenerException::~TCPListenerException() {
+  // TODO
+}
+
+const char* TCPListenerException::what() const noexcept {
+  return error.c_str();
+}
+
 TCPListener::TCPListener(Manager& m):
   mySockFD(0),
   myAddrss(), clieAddrss(),
   myAddrssLen(), clieAddrssLen(),
-  mySegment(TCP_BUFFER_SIZE),
   myManager(m),
+  mySegment(TCP_BUFFER_SIZE),
   active(false),
   myMutex(),
   myThread() {
 #if defined(DEBUG) && VERBOSENESS > 2
-  std::cout << "[DEBUG] Constructing TCPListener class..." << std::endl;
+  std::cout << "[DEBUG] Constructing TCPListener class..." << '\n';
 #endif
 }
 
 TCPListener::~TCPListener() {
 #if defined(DEBUG) && VERBOSENESS > 2
-  std::cout << "[DEBUG] Destructing TCPListener class..." << std::endl;
+  std::cout << "[DEBUG] Destructing TCPListener class..." << '\n';
 #endif
 }
 
 void TCPListener::initSocket() {
 #if defined(DEBUG) && VERBOSENESS > 1
-  std::cout << "[DEBUG] Initializing TCPListener socket..." << std::endl;
+  std::cout << "[DEBUG] Initializing TCPListener socket..." << '\n';
 #endif
   if ((mySockFD = socket(PF_INET, SOCK_STREAM, 0)) < 0) { // Create socket file descriptor for TCP protocol...
     perror("socket()");
-    exit(EXIT_FAILURE);
-    //throw TCPListenerException("Socket creation failed.");
+    throw TCPListenerException("Socket creation failed.");
   }
   int enable = 1;
   if (setsockopt(mySockFD, SOL_SOCKET, SO_REUSEADDR, (const char*) &enable, sizeof enable) < 0) { // TODO Check if SO_REUSEADDR is okay...
     perror("setsockopt()");
-    exit(EXIT_FAILURE);
-    //throw TCPListenerException("Socket options setting failed.");
+    throw TCPListenerException("Socket option setting failed.");
   }
 }
 
 void TCPListener::bindSocket(const PortNum pn) {
   myAddrss.sin_family = AF_INET;  // Fill address information...
-  //myAddrss.sin_addr.s_addr = INADDR_ANY;
-  myAddrss.sin_addr.s_addr = htonl(INADDR_ANY);
+  myAddrss.sin_addr.s_addr = INADDR_ANY;
   myAddrss.sin_port = htons(pn);
   myAddrssLen = sizeof myAddrss;
   if (bind(mySockFD, (const struct sockaddr*) &myAddrss, myAddrssLen) < 0) {  // Bind the socket with the client address...
     perror("bind()");
-    exit(EXIT_FAILURE);
-    //throw TCPListenerException("Socket bind failed.");
+    throw TCPListenerException("Socket bind failed.");
   }
 #if defined(DEBUG) && VERBOSENESS > 1
   if (getsockname(mySockFD, (struct sockaddr*) &myAddrss, &myAddrssLen) < 0) {
     perror("getsockname()");
-    exit(EXIT_FAILURE);
+  } else {
+    std::cout << "[DEBUG] Socket bound on " << inet_ntoa(myAddrss.sin_addr) << ":" << ntohs(myAddrss.sin_port) << "..." << '\n'; // TODO Convert to warning or info?
   }
-  std::cout << "[DEBUG] Socket bound on " << inet_ntoa(myAddrss.sin_addr) << ":" << ntohs(myAddrss.sin_port) << "..." << std::endl; // TODO Convert to warning or info?
 #endif
 }
 
@@ -75,7 +85,7 @@ void TCPListener::configure(const PortNum pn) {
 void TCPListener::listen() {
   if (::listen(mySockFD, 5) < 0) {  // TODO Check backlog parameter...
     perror("listen()");
-    //throw TCPListenerException("Listen start failed."); // TODO Define exception message...
+    throw TCPListenerException("Listen start failed."); // TODO Define exception message...
   }
   fd_set currSet;
   FD_ZERO(&currSet);
@@ -90,10 +100,10 @@ void TCPListener::listen() {
     if (!(descrAmount > 0)) {
       if (descrAmount < 0) {
         perror("select()");
-        std::cerr << RED << "[ERROR] Error receiving request/segment!" << RESET << std::endl;
+        std::cerr << RED << "[ERROR] Error receiving request/segment!" << RESET << '\n';
       } else {  // descrAmount is equal to 0...
 #if defined(DEBUG) && VERBOSENESS > 2
-        std::cout << "[DEBUG] TCP timeout reached!" << std::endl;
+        std::cout << "[DEBUG] TCP timeout reached!" << '\n';
 #endif
       }
       currSet = nextSet;
@@ -109,7 +119,7 @@ void TCPListener::listen() {
             continue;
           }
 #if defined(DEBUG) && VERBOSENESS > 0
-          std::cout << "[DEBUG] New TCP connection accepted!" << std::endl;
+          std::cout << "[DEBUG] New TCP connection accepted!" << '\n';
 #endif
           FD_SET(newSockFD, &nextSet);
           if (newSockFD > currMaxFD) {
@@ -124,7 +134,7 @@ void TCPListener::listen() {
             shutdown(SHUT_RDWR, i);
             close(i);
 #if defined(DEBUG) && VERBOSENESS > 0
-            std::cout << "[DEBUG] TCP connection closed!" << std::endl;
+            std::cout << "[DEBUG] TCP connection closed!" << '\n';
 #endif
             FD_CLR(i, &nextSet);
             if (i == currMaxFD) {
@@ -137,23 +147,25 @@ void TCPListener::listen() {
           } else {
             // Manage received message
             if (mySegment.header() == ENTRY_REQUEST) {
-              StreamClient::Token t = myManager.addClient();
+              ClientToken t = myManager.addClient();
               if (t < 0) {
-                std::cerr << RED << "[ERROR] Impossible to add client!" << RESET << std::endl;
+                std::cerr << RED << "[ERROR] Impossible to add client!" << RESET << '\n';
                 continue;
+                // TODO Add error response!
               }
               mySegment.buildEntryResponse(t);
             } else if (mySegment.header() == EXIT_REQUEST) {
-              StreamClient::Token t = mySegment.token();
+              ClientToken t = mySegment.token();
               int res = myManager.removeClient(t);
               if (res < 0) {
-                std::cerr << RED << "[ERROR] Impossible to remove client!" << RESET << std::endl;
+                std::cerr << RED << "[ERROR] Impossible to remove client!" << RESET << '\n';
                 continue;
               }
               mySegment.buildExitResponse();
             } else {
-              std::cerr << RED << "[ERROR] Not consistent header of TCP segment!" << RESET << std::endl;
+              std::cerr << RED << "[ERROR] Not consistent header of TCP segment!" << RESET << '\n';
               continue;
+              // TODO Add error response!
             }
             int bytes = send(i, mySegment.rawBuffer(), mySegment.size());
             if (bytes < 0) {

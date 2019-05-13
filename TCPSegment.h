@@ -3,18 +3,18 @@
 
 #include <cstdint>
 #include "Payload.h"
-#include "StreamClient.h"
+#include "types.h"
 
 class TCPSegment: public Payload {
 public:
   TCPSegment(MaxSize ms);
   ~TCPSegment();
   // ********************
-  StreamClient::Token token() const;
+  ClientToken token() const;
   // ********************
   void buildEntryRequest();
-  void buildEntryResponse(StreamClient::Token t);
-  void buildExitRequest(StreamClient::Token t);
+  void buildEntryResponse(ClientToken t);
+  void buildExitRequest(ClientToken t);
   void buildExitResponse();
 };
 

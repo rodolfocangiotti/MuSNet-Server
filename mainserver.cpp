@@ -4,11 +4,12 @@
 #include <chrono>
 #include <iostream>
 #include "StreamServer.h"
+#include "prettyprint.h"
 
 bool running = false;
 void signalHandler(int signum) {
-   std::cout << "Receiving termination signal (" << signum << ")..." << std::endl;
-   ::running = false;
+  std::cout << "Receiving termination signal (" << signum << ")..." << '\n';
+  ::running = false;
 }
 
 int main(int argc, const char* argv[]) {
@@ -23,7 +24,7 @@ int main(int argc, const char* argv[]) {
     }
     s.stop(); // THE EXECUTION BLOCKS HERE WHEN TERMINATION SIGNAL IS RECEIVED!
   } catch (std::exception& e) {
-    std::cerr << e.what() << std::endl;
+    std::cerr << RED << e.what() << RESET << '\n';
   }
   return 0;
 }

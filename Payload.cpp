@@ -8,13 +8,13 @@ Payload::Payload(MaxSize ms):
   myBuff(ms, 0),
   mySize(0) {
 #if defined(DEBUG) && VERBOSENESS > 2
-  std::cout << "[DEBUG] Constructing Payload class..." << std::endl;
+  std::cout << "[DEBUG] Constructing Payload class..." << '\n';
 #endif
 }
 
 Payload::~Payload() {
 #if defined(DEBUG) && VERBOSENESS > 2
-  std::cout << "[DEBUG] Destructing Payload class..." << std::endl;
+  std::cout << "[DEBUG] Destructing Payload class..." << '\n';
 #endif
 }
 

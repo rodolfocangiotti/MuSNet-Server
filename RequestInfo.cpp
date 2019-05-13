@@ -4,13 +4,13 @@
 RequestInfo::RequestInfo(BufferSize bs):
   myDatagram(bs) {
 #if defined(DEBUG) && VERBOSENESS > 2
-  std::cout << "[DEBUG] Constructing RequestInfo class..." << std::endl;
+  std::cout << "[DEBUG] Constructing RequestInfo class..." << '\n';
 #endif
 }
 
 RequestInfo::~RequestInfo() {
 #if defined(DEBUG) && VERBOSENESS > 2
-  std::cout << "[DEBUG] Destructing RequestInfo class..." << std::endl;
+  std::cout << "[DEBUG] Destructing RequestInfo class..." << '\n';
 #endif
 }
 
