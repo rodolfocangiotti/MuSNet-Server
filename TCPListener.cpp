@@ -4,6 +4,7 @@
 #include "TCPListener.h"
 #include "commons.h"
 #include "prettyprint.h"
+#include "utils.h"
 
 TCPListenerException::TCPListenerException(const std::string e) noexcept:
   error(e) {
@@ -22,26 +23,26 @@ const char* TCPListenerException::what() const noexcept {
 TCPListener::TCPListener(Manager& m):
   mySockFD(0),
   myAddrss(), clieAddrss(),
-  myAddrssLen(), clieAddrssLen(),
+  myAddrssLen(0), clieAddrssLen(0),
   myManager(m),
   mySegment(TCP_BUFFER_SIZE),
   active(false),
   myMutex(),
   myThread() {
 #if defined(DEBUG) && VERBOSENESS > 2
-  std::cout << "[DEBUG] Constructing TCPListener class..." << '\n';
+  std::cout << getUTCTime() << " [DEBUG] Constructing TCPListener class..." << '\n';
 #endif
 }
 
 TCPListener::~TCPListener() {
 #if defined(DEBUG) && VERBOSENESS > 2
-  std::cout << "[DEBUG] Destructing TCPListener class..." << '\n';
+  std::cout << getUTCTime() << " [DEBUG] Destructing TCPListener class..." << '\n';
 #endif
 }
 
 void TCPListener::initSocket() {
 #if defined(DEBUG) && VERBOSENESS > 1
-  std::cout << "[DEBUG] Initializing TCPListener socket..." << '\n';
+  std::cout << getUTCTime() << " [DEBUG] Initializing TCPListener socket..." << '\n';
 #endif
   if ((mySockFD = socket(PF_INET, SOCK_STREAM, 0)) < 0) { // Create socket file descriptor for TCP protocol...
     perror("socket()");
@@ -67,7 +68,7 @@ void TCPListener::bindSocket(const PortNum pn) {
   if (getsockname(mySockFD, (struct sockaddr*) &myAddrss, &myAddrssLen) < 0) {
     perror("getsockname()");
   } else {
-    std::cout << "[DEBUG] Socket bound on " << inet_ntoa(myAddrss.sin_addr) << ":" << ntohs(myAddrss.sin_port) << "..." << '\n'; // TODO Convert to warning or info?
+    std::cout << getUTCTime() << " [DEBUG] Socket bound on " << inet_ntoa(myAddrss.sin_addr) << ":" << ntohs(myAddrss.sin_port) << "..." << '\n'; // TODO Convert to warning or info?
   }
 #endif
 }
@@ -100,10 +101,10 @@ void TCPListener::listen() {
     if (!(descrAmount > 0)) {
       if (descrAmount < 0) {
         perror("select()");
-        std::cerr << RED << "[ERROR] Error receiving request/segment!" << RESET << '\n';
+        std::cerr << getUTCTime() << RED << " [ERROR] Error receiving request/segment!" << RESET << '\n';
       } else {  // descrAmount is equal to 0...
 #if defined(DEBUG) && VERBOSENESS > 2
-        std::cout << "[DEBUG] TCP timeout reached!" << '\n';
+        std::cout << getUTCTime() << " [DEBUG] TCP timeout reached!" << '\n';
 #endif
       }
       currSet = nextSet;
@@ -119,7 +120,7 @@ void TCPListener::listen() {
             continue;
           }
 #if defined(DEBUG) && VERBOSENESS > 0
-          std::cout << "[DEBUG] New TCP connection accepted!" << '\n';
+          std::cout << getUTCTime() << " [DEBUG] New TCP connection accepted!" << '\n';
 #endif
           FD_SET(newSockFD, &nextSet);
           if (newSockFD > currMaxFD) {
@@ -134,7 +135,7 @@ void TCPListener::listen() {
             shutdown(SHUT_RDWR, i);
             close(i);
 #if defined(DEBUG) && VERBOSENESS > 0
-            std::cout << "[DEBUG] TCP connection closed!" << '\n';
+            std::cout << getUTCTime() << " [DEBUG] TCP connection closed!" << '\n';
 #endif
             FD_CLR(i, &nextSet);
             if (i == currMaxFD) {
@@ -149,7 +150,7 @@ void TCPListener::listen() {
             if (mySegment.header() == ENTRY_REQUEST) {
               ClientToken t = myManager.addClient();
               if (t < 0) {
-                std::cerr << RED << "[ERROR] Impossible to add client!" << RESET << '\n';
+                std::cerr << getUTCTime() << RED << " [ERROR] Impossible to add client!" << RESET << '\n';
                 continue;
                 // TODO Add error response!
               }
@@ -158,12 +159,12 @@ void TCPListener::listen() {
               ClientToken t = mySegment.token();
               int res = myManager.removeClient(t);
               if (res < 0) {
-                std::cerr << RED << "[ERROR] Impossible to remove client!" << RESET << '\n';
+                std::cerr << getUTCTime() << RED << " [ERROR] Impossible to remove client!" << RESET << '\n';
                 continue;
               }
               mySegment.buildExitResponse();
             } else {
-              std::cerr << RED << "[ERROR] Not consistent header of TCP segment!" << RESET << '\n';
+              std::cerr << getUTCTime() << RED << " [ERROR] Not consistent header of TCP segment!" << RESET << '\n';
               continue;
               // TODO Add error response!
             }
@@ -207,11 +208,11 @@ void TCPListener::stop() {
   }
 }
 
-int TCPListener::send(SocketFD sfd, const void* buff, size_t s) {
+int TCPListener::send(const SocketFD sfd, const void* buff, const size_t s) {
   return ::send(sfd, buff, s, 0);
 }
 
-int TCPListener::receive(SocketFD sfd, void* buff, size_t s) {
+int TCPListener::receive(const SocketFD sfd, void* buff, const size_t s) {
   return recv(sfd, buff, s, 0);
 }
 

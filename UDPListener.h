@@ -23,16 +23,16 @@ public:
   UDPListener(ThreadPool<UDPResponse>& tp);
   ~UDPListener();
   // ********************
-  void configure(PortNum pn);
+  void configure(const PortNum pn);
   void start();
   void stop();
 private:
   void initSocket();
-  void bindSocket(PortNum pn);
+  void bindSocket(const PortNum pn);
   void initClientAddress();
   void listen();
-  int receive(void* buff, size_t s);
-  int receiveWithTimeout(fd_set* fds, void* buff, size_t s);
+  int receive(void* buff, const size_t s);
+  int receiveWithTimeout(fd_set* fds, void* buff, const size_t s);
   // ********************
   bool listening();
   // ********************

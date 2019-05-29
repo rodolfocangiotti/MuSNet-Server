@@ -11,15 +11,17 @@ class RequestInfo {
 public:
   typedef uint64_t BufferSize;
   // ********************
-  RequestInfo(BufferSize bs);
+  RequestInfo(const BufferSize bs);
   ~RequestInfo();
   // ********************
   void setAddress(const struct sockaddr_in* addrss, const socklen_t* addrssLen);
-  void setFileDescriptor(SocketFD s);
+  void setFileDescriptor(const SocketFD s);
+  void setReceiptTime(const Time& e);
   // ********************
   struct sockaddr_in address() const;
   socklen_t addressLength() const;
   SocketFD fileDescriptor() const;
+  Time receiptTime() const;
   // ********************
   const UDPDatagram& referDatagram() const;
   UDPDatagram& referWritableDatagram();
@@ -29,6 +31,8 @@ private:
   SocketFD mySockFD;
   // ********************
   UDPDatagram myDatagram;
+  // ********************
+  Time myRecptTime;
 };
 
 #endif

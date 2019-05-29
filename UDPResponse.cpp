@@ -3,17 +3,18 @@
 #include "UDPResponse.h"
 #include "commons.h"
 #include "prettyprint.h"
+#include "utils.h"
 
 UDPResponse::UDPResponse(Manager& m):
   myManager(m) {
 #if defined(DEBUG) && VERBOSENESS > 2
-  std::cout << "[DEBUG] Constructing UDPResponse class..." << '\n';
+  std::cout << getUTCTime() << " [DEBUG] Constructing UDPResponse class..." << '\n';
 #endif
 }
 
 UDPResponse::~UDPResponse() {
 #if defined(DEBUG) && VERBOSENESS > 2
-  std::cout << "[DEBUG] Destructing UDPResponse class..." << '\n';
+  std::cout << getUTCTime() << " [DEBUG] Destructing UDPResponse class..." << '\n';
 #endif
 }
 
@@ -21,49 +22,36 @@ void UDPResponse::operator()(RequestInfo& r) {
   struct sockaddr_in addrss = r.address();
   socklen_t addrssLen = r.addressLength();
   SocketFD sockFD = r.fileDescriptor();
+  Time e = r.receiptTime();
   const UDPDatagram& reqstDatagram = r.referDatagram();
 
   if (reqstDatagram.header() == AUDIO_STREAM_DATA) {
-    std::lock_guard<std::mutex> l(myMutex);
     ClientToken t = reqstDatagram.token();
     ClientTID reqstTID = reqstDatagram.tid();
-    /*
-    ClientTID storedTID = myManager.getClientTID(t);
-    if (storedTID < 0) {
-      std::cerr << RED << "[ERROR] TID not found!" << RESET << '\n';
-      return;
-    }
-    */
-    // XXX When a client sends the disconnection request to TCP node , the UDP node can still have some packets from that client on queue. Assertion, then is not valid: a client can have been just disconnected but the last UDP packet is computed right now!
-
-    //if (tid > storedTID) { // TODO TODO TODO Provisory comment...
-      //AudioVector toClient(AUDIO_VECTOR_SIZE, 0.0); // XXX Initialization should not be necessary!
-      // TODO Check it!
-
-      AudioVector fromClient = reqstDatagram.streamCopy();
+    ClientTID respTID = 0;
+    AudioVector fromClient = reqstDatagram.streamCopy();
+    AudioVector toClient;
+    {
+      std::lock_guard<std::mutex> l(myManager.referMutex());
       if (myManager.updateClientStream(t, reqstTID, fromClient) < 0) {  // Save stream from client...
-        std::cerr << RED << "[ERROR] Error updating client stream!" << RESET << '\n';
-        return;
+        std::cerr << getUTCTime() << RED << " [ERROR] Error updating client stream!" << RESET << '\n';
       }
-      AudioVector toClient = myManager.getOtherClientStreams(t);  // Compute the response stream to client...
-      ClientTID respTID = myManager.getClientResponseTID(t);
+      toClient = myManager.getOtherClientStreams(t);  // Compute the response stream to client...
+      respTID = myManager.getClientResponseTID(t);
+    }
+    if (respTID > 0) {
       // Use another reference to the same object to change its content...
       UDPDatagram& writableReqstDatagram = r.referWritableDatagram();
-      writableReqstDatagram.buildAudioStream(toClient, t, respTID);
+      writableReqstDatagram.buildAudioStream(t, respTID, toClient);
       // Use the constant referece to object in order to send the datagram to client...
-      int bytes = ::sendto(sockFD, (const char*) reqstDatagram.rawBuffer(), UDP_BUFFER_SIZE, 0, (const struct sockaddr*) &addrss, addrssLen);
-      if (bytes < 0) {
-        perror("send");
+      int bytes = sendto(sockFD, (const char*) reqstDatagram.rawBuffer(), UDP_BUFFER_SIZE, 0, (const struct sockaddr*) &addrss, addrssLen);
+      if (bytes < 0) { // TODO Test it!
+        perror("sendto()");
       }
-    /*
-    } else {
-      std::cerr << RED << "[ERROR] Not consistent TID comparison for client " << t << ": " << tid << "-" << storedTID << " (current-last)!" << RESET << '\n';
-      myManager.clearClientStream(t); // TODO Check it
     }
-    */
 
   } else {
-    std::cerr << RED << "[ERROR] Not consistent header of UDP datagram!" << RESET << '\n';
+    std::cerr << getUTCTime() << RED << " [ERROR] Not consistent header of UDP datagram!" << RESET << '\n';
   }
 
 }

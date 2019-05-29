@@ -11,7 +11,7 @@ public:
   typedef uint8_t Mode;
   typedef uint16_t StreamSize;
   // ********************
-  UDPDatagram(MaxSize ms);
+  UDPDatagram(const MaxSize ms);
   ~UDPDatagram();
   // ********************
   ClientToken token() const;
@@ -19,7 +19,7 @@ public:
   StreamSize streamSize() const;
   AudioVector streamCopy() const;
   // ********************
-  void buildAudioStream(AudioVector& v, ClientToken t, ClientTID tid);
+  void buildAudioStream(const ClientToken t, const ClientTID tid, const AudioVector& v);
 };
 
 #endif

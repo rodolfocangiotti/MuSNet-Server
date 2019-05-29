@@ -3,7 +3,6 @@
 
 #include <arpa/inet.h>
 #include <thread>
-#include <vector>
 #include "Manager.h"
 #include "TCPSegment.h"
 #include "types.h"
@@ -30,8 +29,8 @@ private:
   void bindSocket(const PortNum pn);
   void initClientAddress();
   void listen();
-  int send(SocketFD sfd, const void* buff, size_t s);
-  int receive(SocketFD sfd, void* buff, size_t s);
+  int send(const SocketFD sfd, const void* buff, const size_t s);
+  int receive(const SocketFD sfd, void* buff, const size_t s);
   // ********************
   bool listening();
   // ********************

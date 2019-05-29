@@ -1,7 +1,6 @@
 #ifndef UDP_RESPONSE_H
 #define UDP_RESPONSE_H
 
-#include <mutex>
 #include "Manager.h"
 #include "RequestInfo.h"
 #include "UDPDatagram.h"
@@ -14,7 +13,6 @@ public:
   void operator()(RequestInfo& r);
 private:
   Manager& myManager;
-  std::mutex myMutex;
 };
 
 #endif

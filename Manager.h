@@ -4,8 +4,6 @@
 #include <cstdint>
 #include <list>
 #include <mutex>
-#include <thread>
-//#include <vector>
 #include "StreamClient.h"
 #include "types.h"
 
@@ -14,12 +12,14 @@ public:
   Manager();
   ~Manager();
   // ********************
-  ClientToken addClient();
-  int removeClient(ClientToken t);
+  std::mutex& referMutex();
   // ********************
-  AudioVector getOtherClientStreams(ClientToken t);
-  ClientTID getClientResponseTID(ClientToken t);
-  int updateClientStream(ClientToken t, ClientTID tid, AudioVector& v);
+  ClientToken addClient();
+  int removeClient(const ClientToken t);
+  // ********************
+  AudioVector getOtherClientStreams(const ClientToken t);
+  ClientTID getClientResponseTID(const ClientToken t);
+  int updateClientStream(const ClientToken t, const ClientTID tid, const AudioVector& v);
 private:
   typedef std::list<StreamClient> ClientList;
   // ********************
@@ -27,8 +27,7 @@ private:
   // ********************
   ClientList myClients;
   std::mutex myMutex;
-  ClientToken myTokenHist;
-  //std::vector<StreamClient> myClients;
+  ClientToken myLastToken;
 };
 
 #endif

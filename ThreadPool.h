@@ -1,6 +1,9 @@
 #ifndef THREAD_POOL_H
 #define THREAD_POOL_H
 
+#ifdef __linux__
+#include <condition_variable>
+#endif
 #include <queue>
 #include <thread>
 #include <vector>
@@ -14,7 +17,7 @@ public:
   // ********************
   void start();
   void stop();
-  void append(const RequestInfo& r); // TODO Check if a copy of the object is better than a reference...
+  void append(const RequestInfo& r);
 private:
   void thread();
   // ********************

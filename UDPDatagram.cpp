@@ -2,17 +2,18 @@
 #include <iostream>
 #include "UDPDatagram.h"
 #include "commons.h"
+#include "utils.h"
 
-UDPDatagram::UDPDatagram(MaxSize ms):
+UDPDatagram::UDPDatagram(const MaxSize ms):
   Payload(ms) {
 #if defined(DEBUG) && VERBOSENESS > 2
-  std::cout << "[DEBUG] Constructing UDPDatagram class..." << '\n';
+  std::cout << getUTCTime() << " [DEBUG] Constructing UDPDatagram class..." << '\n';
 #endif
 }
 
 UDPDatagram::~UDPDatagram() {
 #if defined(DEBUG) && VERBOSENESS > 2
-  std::cout << "[DEBUG] Destructing UDPDatagram class..." << '\n';
+  std::cout << getUTCTime() << " [DEBUG] Destructing UDPDatagram class..." << '\n';
 #endif
 }
 
@@ -39,14 +40,14 @@ AudioVector UDPDatagram::streamCopy() const { // This method returns a copy of t
   const StreamSize* ssp = reinterpret_cast<const StreamSize*>(bp);
   bp = &(myBuff[9]);
   const AudioSample* asp = reinterpret_cast<const AudioSample*>(bp);
-  AudioVector v(*ssp, 0.0);
+  AudioVector v(*ssp);
   for (int i = 0; i < v.size(); i++) {
     v[i] = asp[i];
   }
   return v;
 }
 
-void UDPDatagram::buildAudioStream(AudioVector& v, ClientToken t, ClientTID tid) {
+void UDPDatagram::buildAudioStream(const ClientToken t, const ClientTID tid, const AudioVector& v) {
   mySize = sizeof (Header) + sizeof (ClientToken) + sizeof (ClientTID) + sizeof (Size) + sizeof (AudioSample) * v.size();
   assert(mySize <= myBuff.size());
   Byte* bp = &(myBuff[0]);

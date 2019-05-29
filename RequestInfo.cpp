@@ -1,16 +1,20 @@
 #include <iostream>
 #include "RequestInfo.h"
+#include "utils.h"
 
-RequestInfo::RequestInfo(BufferSize bs):
-  myDatagram(bs) {
+RequestInfo::RequestInfo(const BufferSize bs):
+  myAddrss(), myAddrssLen(0),
+  mySockFD(0),
+  myDatagram(bs),
+  myRecptTime() {
 #if defined(DEBUG) && VERBOSENESS > 2
-  std::cout << "[DEBUG] Constructing RequestInfo class..." << '\n';
+  std::cout << getUTCTime() << " [DEBUG] Constructing RequestInfo class..." << '\n';
 #endif
 }
 
 RequestInfo::~RequestInfo() {
 #if defined(DEBUG) && VERBOSENESS > 2
-  std::cout << "[DEBUG] Destructing RequestInfo class..." << '\n';
+  std::cout << getUTCTime() << " [DEBUG] Destructing RequestInfo class..." << '\n';
 #endif
 }
 
@@ -18,8 +22,12 @@ void RequestInfo::setAddress(const struct sockaddr_in* addrss, const socklen_t* 
   myAddrss = *addrss;
   myAddrssLen = *addrssLen;
 }
-void RequestInfo::setFileDescriptor(SocketFD s) {
+void RequestInfo::setFileDescriptor(const SocketFD s) {
   mySockFD = s;
+}
+
+void RequestInfo::setReceiptTime(const Time& e) {
+  myRecptTime = e;
 }
 
 struct sockaddr_in RequestInfo::address() const {
@@ -32,6 +40,10 @@ socklen_t RequestInfo::addressLength() const {
 
 SocketFD RequestInfo::fileDescriptor() const {
   return mySockFD;
+}
+
+Time RequestInfo::receiptTime() const {
+  return myRecptTime;
 }
 
 const UDPDatagram& RequestInfo::referDatagram() const {

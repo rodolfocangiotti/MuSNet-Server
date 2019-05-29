@@ -9,23 +9,27 @@ public:
   StreamVector();
   ~StreamVector();
   // ********************
+  ClientToken owner() const;
   ClientTID tid() const;
   // ********************
-  void setAudioVector(AudioVector& v);
-  void setTID(ClientTID tid);
+  void setAudioVector(const AudioVector& v);
+  void setOwner(const ClientToken t);
+  void setTID(const ClientTID tid);
   // ********************
-  int addReadPermission(ClientToken t);
-  int removeReadPermission(ClientToken t);
+  int addReadPermission(const ClientToken t);
+  int removeReadPermission(const ClientToken t);
   // ********************
-  AudioVector readVector(ClientToken t);
+  AudioVector readVector(const ClientToken t);
   // ********************
   bool isDeletable();
-  bool isReadableBy(ClientToken t);
+  bool isReadableBy(const ClientToken t);
 private:
   typedef std::map<ClientToken, bool> ReadLogger;
+  // ********************
   AudioVector myVect;
-  ClientTID myTID;
   ReadLogger myLog;
+  ClientToken myOwner;
+  ClientTID myTID;
 };
 
 #endif

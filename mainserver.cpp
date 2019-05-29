@@ -22,7 +22,7 @@ int main(int argc, const char* argv[]) {
     while (::running) {
       std::this_thread::sleep_for(std::chrono::seconds(1));
     }
-    s.stop(); // THE EXECUTION BLOCKS HERE WHEN TERMINATION SIGNAL IS RECEIVED!
+    s.stop();
   } catch (std::exception& e) {
     std::cerr << RED << e.what() << RESET << '\n';
   }
