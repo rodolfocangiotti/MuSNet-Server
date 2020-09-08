@@ -1,6 +1,7 @@
 #include <cassert>
 #include <iostream>
 #include "Console.h"
+#include "prettyprint.h"
 
 
 
@@ -34,18 +35,52 @@ void Console::log(const T n) {
 }
 */
 
-void Console::log(const char* s) {
+void Console::log(const char* s, const Color c) {
+  std::string is(s);
+  is = prettify(is, c);
+  append(is);
+}
+
+void Console::log(const std::string& s, const Color c) {
+  std::string is = static_cast<std::string>(s);
+  is = prettify(is, c);
+  append(is);
+}
+
+void Console::append(const std::string& s) {
   Locker l(mutex);
   assert(("Console thread is not running.", isRunning));
   queue.emplace(s);
   condVar.notify_one();
 }
 
-void Console::log(const std::string& s) {
-  Locker l(mutex);
-  assert(("Console thread is not running.", isRunning));
-  queue.emplace(s);
-  condVar.notify_one();
+std::string& Console::prettify(std::string& s, const Color c) {
+  if (c == Color::Black) {
+    s.insert(0, BLACK);
+    s.append(RESET);
+  } else if (c == Color::Red) {
+    s.insert(0, RED);
+    s.append(RESET);
+  } else if (c == Color::Green) {
+    s.insert(0, GREEN);
+    s.append(RESET);
+  } else if (c == Color::Yellow) {
+    s.insert(0, YELLOW);
+    s.append(RESET);
+  } else if (c == Color::Blue) {
+    s.insert(0, BLUE);
+    s.append(RESET);
+  } else if (c == Color::Magenta) {
+    s.insert(0, MAGENTA);
+    s.append(RESET);
+  } else if (c == Color::Cyan) {
+    s.insert(0, CYAN);
+    s.append(RESET);
+  } else if (c == Color::White) {
+    s.insert(0, WHITE);
+    s.append(RESET);
+  }
+  return s;
 }
 
 void Console::runThread() {
