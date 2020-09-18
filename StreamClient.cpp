@@ -1,5 +1,6 @@
 #include <cassert>
 #include <iostream>
+#include "Console.h"
 #include "StreamClient.h"
 #include "commons.h"
 #include "prettyprint.h"
@@ -16,13 +17,13 @@ StreamClient::StreamClient(const ClientToken t):
   myToken(t),
   myQueueMaxSize(0) {
 #if defined(DEBUG) && VERBOSENESS > 2
-  std::cout << getUTCTime() << " [DEBUG] Constructing StreamClient class..." << '\n';
+  Console::log(getUTCTime() + " [DEBUG] Constructing StreamClient class...");
 #endif
 }
 
 StreamClient::~StreamClient() {
 #if defined(DEBUG) && VERBOSENESS > 2
-  std::cout << getUTCTime() << " [DEBUG] Destructing StreamClient class..." << '\n';
+  Console::log(getUTCTime() + " [DEBUG] Destructing StreamClient class...");
 #endif
 }
 
@@ -38,7 +39,7 @@ ClientTID StreamClient::getNewResponseTID() {
 int StreamClient::addReader(const ClientToken ot) {
   myReaders.push_back(ot);  // Push token in the readers' list...
 #if defined(DEBUG) && VERBOSENESS > 1
-  std::cout << getUTCTime() << " [DEBUG] Client " << myToken << ": added reader " << ot << '\n';
+  Console::log(getUTCTime() + " [DEBUG] Client " + str(myToken) + ": added reader " + str(ot));
 #endif
   return 0; // TODO Check if errors can occur! If yes, return -1!
 }
@@ -60,7 +61,7 @@ int StreamClient::removeReader(const ClientToken ot) {
     sv->removeReadPermission(ot);
   }
 #if defined(DEBUG) && VERBOSENESS > 1
-  std::cout << getUTCTime() << " [DEBUG] Client " << myToken << ": removed reader " << ot << '\n';
+  Console::log(getUTCTime() + " [DEBUG] Client " + str(myToken) + ": removed reader " + str(ot));
 #endif
   return 0;
 }
@@ -80,9 +81,9 @@ void StreamClient::insertVector(const ClientToken mt, const ClientTID wtid, cons
 
     myQueueMaxSize = myQueue.size() > myQueueMaxSize ? myQueue.size() : myQueueMaxSize;
 #if defined(DEBUG) && VERBOSENESS > 1
-    std::cout << getUTCTime() << GREEN << " [DEBUG] Client " << myToken << ": inserted new vector on queue (TID: " << wtid << ")" << RESET << '\n';
-    std::cout << YELLOW << "Current queue size: " << myQueue.size() << '\n';
-    std::cout << "Maximum queue size reached: " << myQueueMaxSize << RESET << '\n';
+    Console::log(getUTCTime() + " [DEBUG] Client " + str(myToken) + ": inserted new vector on queue (TID: " + str(wtid) + ")", Color::Green);
+    Console::log("Current queue size: " + str(myQueue.size()), Color::Yellow);
+    Console::log("Maximum queue size reached: " + str(myQueueMaxSize), Color::Yellow);
 #endif
   } else {
     if (myQueue.size() > 0) {
@@ -101,7 +102,7 @@ AudioVector StreamClient::retrieveVector(const ClientToken ot) {
       if (sv->isDeletable()) {
         myQueue.erase(sv);
 #if defined(DEBUG) && VERBOSENESS > 1
-        std::cout << getUTCTime() << MAGENTA << " [DEBUG] Client " << myToken << ": removed vector from queue" << RESET << '\n';
+        Console::log(getUTCTime() + " [DEBUG] Client " + str(myToken) + ": removed vector from queue", Color::Magenta);
 #endif
       }
       break;

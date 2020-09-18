@@ -3,6 +3,7 @@
 #endif
 #include <chrono>
 #include <iostream>
+#include "Console.h"
 #include "StreamServer.h"
 #include "prettyprint.h"
 
@@ -15,6 +16,7 @@ void signalHandler(int signum) {
 int main(int argc, const char* argv[]) {
   signal(SIGTERM, signalHandler);
   try {
+    Console::start();
     StreamServer s;
     s.configure(50000, 50001);
     s.start();
@@ -22,6 +24,7 @@ int main(int argc, const char* argv[]) {
     while (::running) {
       std::this_thread::sleep_for(std::chrono::seconds(1));
     }
+    Console::stop();
     s.stop();
   } catch (std::exception& e) {
     std::cerr << RED << e.what() << RESET << '\n';

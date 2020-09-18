@@ -1,5 +1,6 @@
 #include <cassert>
 #include <iostream>
+#include "Console.h"
 #include "StreamVector.h"
 #include "commons.h"
 #include "prettyprint.h"
@@ -10,13 +11,13 @@ StreamVector::StreamVector():
   myLog(),
   myOwner(0), myTID(0) {
 #if defined(DEBUG) && VERBOSENESS > 2
-  std::cout << getUTCTime() << " [DEBUG] Constructing StreamVector class..." << '\n';
+  Console::log(getUTCTime() + " [DEBUG] Constructing StreamVector class...");
 #endif
 }
 
 StreamVector::~StreamVector() {
 #if defined(DEBUG) && VERBOSENESS > 2
-  std::cout << getUTCTime() << " [DEBUG] Destructing StreamVector class..." << '\n';
+  Console::log(getUTCTime() + " [DEBUG] Destructing StreamVector class...");
 #endif
 }
 
@@ -45,7 +46,7 @@ int StreamVector::addReadPermission(const ClientToken t) {
   assert(myLog.count(t) == 0);
   myLog[t] = false;
 #if defined(DEBUG) && VERBOSENESS > 2
-  std::cout << getUTCTime() << " [DEBUG] Vector " << myOwner << "-" << myTID << ": added read permission to client " << t << '\n';
+  Console::log(getUTCTime() + " [DEBUG] Vector " + str(myOwner) + "-" + str(myTID) + ": added read permission to client " + str(t));
 #endif
   return 0;
 }
@@ -57,7 +58,7 @@ int StreamVector::removeReadPermission(const ClientToken t) {
     if (i->first == t) {
       myLog.erase(i);
   #if defined(DEBUG) && VERBOSENESS > 2
-      std::cout << getUTCTime() << " [DEBUG] Vector " << myOwner << "-" << myTID << ": removed read permission to client " << t << '\n';
+      Console::log(getUTCTime() + " [DEBUG] Vector " + str(myOwner) + "-" + str(myTID) + ": removed read permission to client " + str(t));
   #endif
       return 0;
     }

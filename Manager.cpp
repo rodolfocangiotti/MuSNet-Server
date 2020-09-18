@@ -1,6 +1,7 @@
 #include <cassert>
 #include <chrono>
 #include <iostream>
+#include "Console.h"
 #include "Manager.h"
 #include "commons.h"
 #include "prettyprint.h"
@@ -13,13 +14,13 @@ Manager::Manager():
   myMutex(),
   myLastToken(0) {
 #if defined(DEBUG) && VERBOSENESS > 2
-  std::cout << getUTCTime() << " [DEBUG] Destructing Manager class..." << '\n';
+  Console::log(getUTCTime() + " [DEBUG] Destructing Manager class...");
 #endif
 }
 
 Manager::~Manager() {
 #if defined(DEBUG) && VERBOSENESS > 2
-  std::cout << getUTCTime() << " [DEBUG] Destructing Manager class..." << '\n';
+  Console::log(getUTCTime() + " [DEBUG] Destructing Manager class...");
 #endif
 }
 
@@ -38,7 +39,7 @@ ClientToken Manager::addClient() {
   }
   myClients.push_back(nsc);
 #if defined(DEBUG) && VERBOSENESS > 0
-  std::cout << getUTCTime() << GREEN << " [DEBUG] Added new client with token: " << t << RESET << '\n';
+  Console::log(getUTCTime() + " [DEBUG] Added new client with token: " + str(t), Color::Green);
   debugPrint();
 #endif
   return t; // TODO Check if errors can occur! If yes, return -1!
@@ -52,7 +53,7 @@ int Manager::removeClient(const ClientToken t) {
       found = true;
       myClients.erase(sc);
 #if defined(DEBUG) && VERBOSENESS > 0
-      std::cout << getUTCTime() << GREEN << " [DEBUG] Removed client with token: " << t << RESET << '\n';
+      Console::log(getUTCTime() + " [DEBUG] Removed client with token: " + str(t), Color::Green);
       debugPrint();
 #endif
       break;
@@ -107,9 +108,9 @@ int Manager::updateClientStream(const ClientToken t, const ClientTID tid, const 
 }
 
 void Manager::debugPrint() {
-  std::cout << getUTCTime() << CYAN << myClients.size() << " connected!" << RESET << '\n';
+  Console::log(getUTCTime() + str(myClients.size()) + " connected!", Color::Cyan);
   int i = 1;
   for (ClientList::iterator sc = myClients.begin(); sc != myClients.end(); sc++) {
-    std::cout << getUTCTime() << CYAN << " Client n." << i++ << " uses token " << sc->token() << RESET << '\n';
+    Console::log(getUTCTime() + " Client n." + str(i++) + " uses token " + str(sc->token()), Color::Cyan);
   }
 }

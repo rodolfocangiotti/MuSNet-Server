@@ -1,4 +1,5 @@
 #include <iostream>
+#include "Console.h"
 #include "RequestInfo.h"
 #include "utils.h"
 
@@ -8,13 +9,13 @@ RequestInfo::RequestInfo(const BufferSize bs):
   myDatagram(bs),
   myRecptTime() {
 #if defined(DEBUG) && VERBOSENESS > 2
-  std::cout << getUTCTime() << " [DEBUG] Constructing RequestInfo class..." << '\n';
+  Console::log(getUTCTime() + " [DEBUG] Constructing RequestInfo class...");
 #endif
 }
 
 RequestInfo::~RequestInfo() {
 #if defined(DEBUG) && VERBOSENESS > 2
-  std::cout << getUTCTime() << " [DEBUG] Destructing RequestInfo class..." << '\n';
+  Console::log(getUTCTime() + " [DEBUG] Destructing RequestInfo class...");
 #endif
 }
 

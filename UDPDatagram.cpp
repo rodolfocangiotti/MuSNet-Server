@@ -1,5 +1,6 @@
 #include <cassert>
 #include <iostream>
+#include "Console.h"
 #include "UDPDatagram.h"
 #include "commons.h"
 #include "utils.h"
@@ -7,13 +8,13 @@
 UDPDatagram::UDPDatagram(const MaxSize ms):
   Payload(ms) {
 #if defined(DEBUG) && VERBOSENESS > 2
-  std::cout << getUTCTime() << " [DEBUG] Constructing UDPDatagram class..." << '\n';
+  Console::log(getUTCTime() + " [DEBUG] Constructing UDPDatagram class...");
 #endif
 }
 
 UDPDatagram::~UDPDatagram() {
 #if defined(DEBUG) && VERBOSENESS > 2
-  std::cout << getUTCTime() << " [DEBUG] Destructing UDPDatagram class..." << '\n';
+  Console::log(getUTCTime() + " [DEBUG] Destructing UDPDatagram class...");
 #endif
 }
 

@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include <cassert>
 #include <iostream>
+#include "Console.h"
 #include "TCPListener.h"
 #include "commons.h"
 #include "prettyprint.h"
@@ -30,19 +31,19 @@ TCPListener::TCPListener(Manager& m):
   myMutex(),
   myThread() {
 #if defined(DEBUG) && VERBOSENESS > 2
-  std::cout << getUTCTime() << " [DEBUG] Constructing TCPListener class..." << '\n';
+  Console::log(getUTCTime() + " [DEBUG] Constructing TCPListener class...");
 #endif
 }
 
 TCPListener::~TCPListener() {
 #if defined(DEBUG) && VERBOSENESS > 2
-  std::cout << getUTCTime() << " [DEBUG] Destructing TCPListener class..." << '\n';
+  Console::log(getUTCTime() + " [DEBUG] Destructing TCPListener class...");
 #endif
 }
 
 void TCPListener::initSocket() {
 #if defined(DEBUG) && VERBOSENESS > 1
-  std::cout << getUTCTime() << " [DEBUG] Initializing TCPListener socket..." << '\n';
+  Console::log(getUTCTime() + " [DEBUG] Initializing TCPListener socket...");
 #endif
   if ((mySockFD = socket(PF_INET, SOCK_STREAM, 0)) < 0) { // Create socket file descriptor for TCP protocol...
     perror("socket()");
@@ -68,7 +69,7 @@ void TCPListener::bindSocket(const PortNum pn) {
   if (getsockname(mySockFD, (struct sockaddr*) &myAddrss, &myAddrssLen) < 0) {
     perror("getsockname()");
   } else {
-    std::cout << getUTCTime() << " [DEBUG] Socket bound on " << inet_ntoa(myAddrss.sin_addr) << ":" << ntohs(myAddrss.sin_port) << "..." << '\n'; // TODO Convert to warning or info?
+    Console::log(getUTCTime() + " [DEBUG] Socket bound on " + inet_ntoa(myAddrss.sin_addr) + ":" + str(ntohs(myAddrss.sin_port)) + "..."); // TODO Convert to warning or info?
   }
 #endif
 }
@@ -104,7 +105,7 @@ void TCPListener::listen() {
         std::cerr << getUTCTime() << RED << " [ERROR] Error receiving request/segment!" << RESET << '\n';
       } else {  // descrAmount is equal to 0...
 #if defined(DEBUG) && VERBOSENESS > 2
-        std::cout << getUTCTime() << " [DEBUG] TCP timeout reached!" << '\n';
+        Console::log(getUTCTime() + " [DEBUG] TCP timeout reached!");
 #endif
       }
       currSet = nextSet;
@@ -120,7 +121,7 @@ void TCPListener::listen() {
             continue;
           }
 #if defined(DEBUG) && VERBOSENESS > 0
-          std::cout << getUTCTime() << " [DEBUG] New TCP connection accepted!" << '\n';
+          Console::log(getUTCTime() + " [DEBUG] New TCP connection accepted!");
 #endif
           FD_SET(newSockFD, &nextSet);
           if (newSockFD > currMaxFD) {
@@ -135,7 +136,7 @@ void TCPListener::listen() {
             shutdown(SHUT_RDWR, i);
             close(i);
 #if defined(DEBUG) && VERBOSENESS > 0
-            std::cout << getUTCTime() << " [DEBUG] TCP connection closed!" << '\n';
+            Console::log(getUTCTime() + " [DEBUG] TCP connection closed!");
 #endif
             FD_CLR(i, &nextSet);
             if (i == currMaxFD) {

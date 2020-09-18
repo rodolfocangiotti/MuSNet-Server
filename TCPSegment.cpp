@@ -1,5 +1,6 @@
 #include <cassert>
 #include <iostream>
+#include "Console.h"
 #include "TCPSegment.h"
 #include "commons.h"
 #include "utils.h"
@@ -7,13 +8,13 @@
 TCPSegment::TCPSegment(const MaxSize ms):
   Payload(ms) {
 #if defined(DEBUG) && VERBOSENESS > 2
-  std::cout << getUTCTime() << " [DEBUG] Constructing TCPSegment class..." << '\n';
+  Console::log(getUTCTime() + " [DEBUG] Constructing TCPSegment class...");
 #endif
 }
 
 TCPSegment::~TCPSegment() {
 #if defined(DEBUG) && VERBOSENESS > 2
-  std::cout << getUTCTime() << " [DEBUG] Destructing TCPSegment class..." << '\n';
+  Console::log(getUTCTime() + " [DEBUG] Destructing TCPSegment class...");
 #endif
 }
 

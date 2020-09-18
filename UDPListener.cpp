@@ -2,6 +2,8 @@
 #include <cassert>
 #include <chrono>
 #include <iostream>
+#include "Chrono.h"
+#include "Console.h"
 #include "UDPListener.h"
 #include "commons.h"
 #include "prettyprint.h"
@@ -32,13 +34,13 @@ UDPListener::UDPListener(ThreadPool<UDPResponse>& tp):
   myMutex(),
   myThread() {
 #if defined(DEBUG) && VERBOSENESS > 2
-  std::cout << getUTCTime() << " [DEBUG] Constructing UDPListener class..." << '\n';
+  Console::log(getUTCTime() + " [DEBUG] Constructing UDPListener class...");
 #endif
 }
 
 UDPListener::~UDPListener() {
 #if defined(DEBUG) && VERBOSENESS > 2
-  std::cout << getUTCTime() << " [DEBUG] Destructing UDPListener class..." << '\n';
+  Console::log(getUTCTime() + " [DEBUG] Destructing UDPListener class...");
 #endif
   stop(); // Make sure the listening is stopped...
   close(mySockFD);
@@ -46,7 +48,7 @@ UDPListener::~UDPListener() {
 
 void UDPListener::initSocket() {
 #if defined(DEBUG) && VERBOSENESS > 1
-  std::cout << getUTCTime() << " [DEBUG] Initializing UDPListener socket..." << '\n';
+  Console::log(getUTCTime() + " [DEBUG] Initializing UDPListener socket...");
 #endif
   if ((mySockFD = socket(PF_INET, SOCK_DGRAM, 0)) < 0) { // Create socket file descriptor for UDP protocol...
     perror("socket()");
@@ -72,7 +74,7 @@ void UDPListener::bindSocket(const PortNum pn) {
   if (getsockname(mySockFD, (struct sockaddr*) &myAddrss, &myAddrssLen) < 0) {
     perror("getsockname()");
   } else {
-    std::cout << getUTCTime() << " [DEBUG] Socket bound on " << inet_ntoa(myAddrss.sin_addr) << ":" << ntohs(myAddrss.sin_port) << "..." << '\n'; // TODO Convert to warning or info?
+    Console::log(getUTCTime() + " [DEBUG] Socket bound on " + inet_ntoa(myAddrss.sin_addr) + ":" + str(ntohs(myAddrss.sin_port)) + "..."); // TODO Convert to warning or info?
   }
 #endif
 }
@@ -105,15 +107,16 @@ void UDPListener::listen() {
         std::cerr << getUTCTime() << RED << " [ERROR] Error receiving datagram!" << RESET << '\n';
       } else {  // res is equal to 0...
 #if defined(DEBUG) && VERBOSENESS > 2
-        std::cout << getUTCTime() << " [ERROR] UDP timeout reached!" << '\n';
+        Console::log(getUTCTime() + " [ERROR] UDP timeout reached!");
 #endif
       }
       currSet = nextSet;
       continue;
     }
 
+    Chrono::setPoint();
 #if defined(DEBUG) && VERBOSENESS > 2
-    std::cout << getUTCTime() << " [DEBUG] Datagram received!" << '\n';
+    Console::log(getUTCTime() + " [DEBUG] Datagram received!");
 #endif
     myRequestInfo.setFileDescriptor(mySockFD);
     myRequestInfo.setAddress(&clieAddrss, &clieAddrssLen);

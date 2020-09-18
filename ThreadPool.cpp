@@ -1,4 +1,5 @@
 #include <iostream>
+#include "Console.h"
 #include "RequestInfo.h"
 #include "ThreadPool.h"
 #include "UDPResponse.h"
@@ -15,14 +16,14 @@ ThreadPool<T>::ThreadPool(T& t):
   running(false),
   myThrdCounter(0) {
 #if defined(DEBUG) && VERBOSENESS > 2
-  std::cout << getUTCTime() << " [DEBUG] Constructing ThreadPool class..." << '\n';
+  Console::log(getUTCTime() + " [DEBUG] Constructing ThreadPool class...");
 #endif
 }
 
 template <typename T>
 ThreadPool<T>::~ThreadPool() {
 #if defined(DEBUG) && VERBOSENESS > 2
-  std::cout << getUTCTime() << " [DEBUG] Destructing ThreadPool class..." << '\n';
+  Console::log(getUTCTime() + " [DEBUG] Destructing ThreadPool class...");
 #endif
   stop();
 }
@@ -69,8 +70,8 @@ void ThreadPool<T>::append(const RequestInfo& r) {
     myCondVar.notify_one();
   }
 #if defined(DEBUG) && VERBOSENESS > 2
-  std::cout << getUTCTime() << " [DEBUG] Appending request to thread pool" << '\n';
-  std::cout << "Current queue size: " << queueSize << '\n';
+  Console::log(getUTCTime() + " [DEBUG] Appending request to thread pool");
+  Console::log("Current queue size: " + str(queueSize));
 #endif
 }
 
@@ -87,7 +88,7 @@ void ThreadPool<T>::thread() {
           continue;
         } else {
 #if defined(DEBUG) && VERBOSENESS > 1
-          std::cout << getUTCTime() << " [DEBUG] Exiting thread n. " << thrdNum << "..." << '\n';
+          Console::log(getUTCTime() + " [DEBUG] Exiting thread n. " + str(thrdNum) + "...");
 #endif
           break;
         }
@@ -97,7 +98,7 @@ void ThreadPool<T>::thread() {
       // TODO Add here a proper code block if a queue limit is necessary!
     }
 #if defined(DEBUG) && VERBOSENESS > 2
-    std::cout << getUTCTime() << " [DEBUG] Thread n." << thrdNum << " is computing request " << r.referDatagram().token() << "-" << r.referDatagram().tid() << '\n';
+    Console::log(getUTCTime() + " [DEBUG] Thread n." + str(thrdNum) + " is computing request " + str(r.referDatagram().token()) + "-" + str(r.referDatagram().tid()));
 #endif
     myTask(r);  // Do the task, passing it the request informations...
   }

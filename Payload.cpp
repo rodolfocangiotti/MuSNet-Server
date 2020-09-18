@@ -1,4 +1,5 @@
 #include <iostream>
+#include "Console.h"
 #include "Payload.h"
 #include "commons.h"
 #include "utils.h"
@@ -9,13 +10,13 @@ Payload::Payload(const MaxSize ms):
   myBuff(ms, 0),
   mySize(0) {
 #if defined(DEBUG) && VERBOSENESS > 2
-  std::cout << getUTCTime() << " [DEBUG] Constructing Payload class..." << '\n';
+  Console::log(getUTCTime() + " [DEBUG] Constructing Payload class...");
 #endif
 }
 
 Payload::~Payload() {
 #if defined(DEBUG) && VERBOSENESS > 2
-  std::cout << getUTCTime() << " [DEBUG] Destructing Payload class..." << '\n';
+  Console::log(getUTCTime() + " [DEBUG] Destructing Payload class...");
 #endif
 }
 
