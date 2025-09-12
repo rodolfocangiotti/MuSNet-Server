@@ -9,7 +9,7 @@
 
 bool running = false;
 void signalHandler(int signum) {
-  std::cout << "Receiving termination signal (" << signum << ")..." << '\n';
+  Console::log("Receiving termination signal (" + str(signum) + ")...");
   ::running = false;
 }
 

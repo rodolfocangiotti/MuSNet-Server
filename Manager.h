@@ -20,6 +20,7 @@ public:
   AudioVector getOtherClientStreams(const ClientToken t);
   ClientTID getClientResponseTID(const ClientToken t);
   int updateClientStream(const ClientToken t, const ClientTID tid, const AudioVector& v);
+  const std::list<ClientTID> getTIDHistory(ClientToken tk);
 private:
   typedef std::list<StreamClient> ClientList;
   // ********************

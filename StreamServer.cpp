@@ -10,8 +10,10 @@ StreamServer::StreamServer():
   myManager(),
   myTCPListnr(myManager),
   myUDPListnr(myUDPThrds),
-  myUDPResp(myManager),
-  myUDPThrds(myUDPResp) {
+  myUDPResp(myManager, myUDPOthrThrds),
+  myUDPSendr(),
+  myUDPThrds(myUDPResp),
+  myUDPOthrThrds(myUDPSendr) {
 #if defined(DEBUG) && VERBOSENESS > 2
   Console::log(getUTCTime() + " [DEBUG] Constructing StreamServer class...");
 #endif
@@ -59,6 +61,7 @@ void StreamServer::start() {
     Console::log(getUTCTime() + " [DEBUG] Starting thread pool...");
 #endif
     myUDPThrds.start();
+    myUDPOthrThrds.start();
     active = true;
   }
 }
@@ -77,6 +80,7 @@ void StreamServer::stop() {
     Console::log(getUTCTime() + " [DEBUG] Stopping thread pool...");
 #endif
     myUDPThrds.stop();
+    myUDPOthrThrds.stop();
     active = false;
   }
 }
