@@ -12,7 +12,7 @@
 template <typename T>
 class ThreadPool {
 public:
-  ThreadPool(T& t);
+  ThreadPool(T& t, uint numThreads = NUM_THREADS);
   ~ThreadPool();
   // ********************
   void start();

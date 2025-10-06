@@ -96,6 +96,7 @@ void UDPListener::listen() {
   FD_SET(mySockFD, &currSet);
   fd_set nextSet = currSet;
   myTimeout = {1, 0};
+  struct timeval T = myTimeout;
 
   while (listening()) {
     // Receive datagram from client...
@@ -111,6 +112,7 @@ void UDPListener::listen() {
 #endif
       }
       currSet = nextSet;
+      myTimeout = T;
       continue;
     }
 
@@ -123,6 +125,7 @@ void UDPListener::listen() {
     myRequestInfo.setReceiptTime(std::chrono::high_resolution_clock::now());
     myThreadPool.append(myRequestInfo);
     currSet = nextSet;
+    myTimeout = T;
   }
 }
 

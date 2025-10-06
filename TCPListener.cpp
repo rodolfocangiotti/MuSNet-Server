@@ -96,6 +96,8 @@ void TCPListener::listen() {
   SocketFD currMaxFD = mySockFD;
   SocketFD nextMaxFD = mySockFD;
   struct timeval timeout = {1, 0}; // Define a timeout of 1 second...
+  struct timeval T = timeout;
+
   while (listening()) {
     // Receive segment from client...
     int descrAmount = select(currMaxFD + 1, &currSet, NULL, NULL, &timeout);
@@ -109,6 +111,7 @@ void TCPListener::listen() {
 #endif
       }
       currSet = nextSet;
+      timeout = T;
       continue;
     }
     // ***** SOCKET ITERATION BLOCK ******
@@ -180,6 +183,7 @@ void TCPListener::listen() {
     }
     // ***** END OF SOCKET ITERATION BLOCK *****
     currSet = nextSet;
+    timeout = T;
     currMaxFD = nextMaxFD; // Update maximum file descriptor value for the next cycle...
   }
 }

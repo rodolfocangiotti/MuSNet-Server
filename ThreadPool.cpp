@@ -7,12 +7,12 @@
 #include "utils.h"
 
 template <typename T>
-ThreadPool<T>::ThreadPool(T& t):
+ThreadPool<T>::ThreadPool(T& t, uint numThreads):
   myTask(t),
   myCondVar(),
   myMutex(),
   myQueue(),
-  myThreads(NUM_THREADS),
+  myThreads(numThreads),
   running(false),
   myThrdCounter(0) {
 #if defined(DEBUG) && VERBOSENESS > 2
@@ -69,6 +69,16 @@ void ThreadPool<T>::append(const RequestInfo& r) {
     queueSize = myQueue.size();
     myCondVar.notify_one();
   }
+#if defined(DEBUG) && VERBOSENESS == 1
+  static unsigned long last = 0;
+  auto t = std::chrono::system_clock::now().time_since_epoch();
+  unsigned long msecEpoch = std::chrono::duration_cast<std::chrono::milliseconds>(t).count();
+  long tdiff = msecEpoch - last;
+  if (tdiff > 1000) {
+    last = msecEpoch;
+    std::cout << "Current queue size: " << queueSize << '\n';
+  }
+#endif
 #if defined(DEBUG) && VERBOSENESS > 2
   Console::log(getUTCTime() + " [DEBUG] Appending request to thread pool");
   Console::log("Current queue size: " + str(queueSize));
@@ -105,3 +115,4 @@ void ThreadPool<T>::thread() {
 }
 
 template class ThreadPool<UDPResponse>;
+template class ThreadPool<UDPSender>;

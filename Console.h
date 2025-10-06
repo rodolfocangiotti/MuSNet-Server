@@ -1,6 +1,7 @@
 #ifndef CONSOLE_H
 #define CONSOLE_H
 
+#include <condition_variable> // TODO On Linux only...
 #include <queue>
 #include <string>
 #include <thread>

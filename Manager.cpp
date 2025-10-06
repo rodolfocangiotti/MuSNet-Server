@@ -14,7 +14,7 @@ Manager::Manager():
   myMutex(),
   myLastToken(0) {
 #if defined(DEBUG) && VERBOSENESS > 2
-  Console::log(getUTCTime() + " [DEBUG] Destructing Manager class...");
+  Console::log(getUTCTime() + " [DEBUG] Constructing Manager class...");
 #endif
 }
 
@@ -32,11 +32,15 @@ ClientToken Manager::addClient() {
   std::lock_guard<std::mutex> l(myMutex);
   ClientToken t = ++myLastToken;
   StreamClient nsc = StreamClient(t);
-  for (ClientList::iterator osc = myClients.begin(); osc != myClients.end(); osc++) {
-    osc->addReader(t);
-    ClientToken ot = osc->token();
-    nsc.addReader(ot);
-  }
+  // for (ClientList::iterator osc = myClients.begin(); osc != myClients.end(); osc++) {
+  //   osc->addReader(t);
+  //   ClientToken ot = osc->token();
+  //   nsc.addReader(ot);
+  // }
+  /*
+  Sospetto che il blocco sopra commentato ritardi lo streaming del tempo del ping più ritardi addizionali dovuti al TCP.
+  Sposto l'operazione in updateClientStream()
+  */
   myClients.push_back(nsc);
 #if defined(DEBUG) && VERBOSENESS > 0
   Console::log(getUTCTime() + " [DEBUG] Added new client with token: " + str(t), Color::Green);
@@ -97,14 +101,36 @@ ClientTID Manager::getClientResponseTID(const ClientToken t) {
 
 int Manager::updateClientStream(const ClientToken t, const ClientTID tid, const AudioVector& v) {
   assert(!(myMutex.try_lock())); // XXX MUTEX SHOULD BE ALREADY LOCKED!
+  StreamClient* _sc = nullptr;
   for (ClientList::iterator sc = myClients.begin(); sc != myClients.end(); sc++) {
     if (sc->token() == t) {
-      sc->insertVector(t, tid, v);
-      return 0;
+      // sc->insertVector(t, tid, v);
+      // return 0;
+      _sc = &(*sc);
+      break;
     }
   }
-  std::cerr << getUTCTime() << RED << " [ERROR] Impossible to update client stream (token not found)!" << RESET << '\n';
-  return -1;
+  if (_sc == nullptr) {
+    // XXX ERRORE GRAVE...
+    return -1;
+  }
+  if (_sc->isWaiting()) {
+    // std::cout << RED << "ENTERING IN THE INFERNO!" << RESET << '\n';
+    for (ClientList::iterator sc = myClients.begin(); sc != myClients.end(); sc++) {
+      if (sc->token() != t) {
+        sc->addReader(t);
+        ClientToken ot = sc->token();
+        _sc->addReader(ot);
+        std::cout << YELLOW << "ADDING READ PERMISSIONS TO " << t << " ON CLIENT " << ot << RESET << '\n';
+        std::cout << CYAN << "ADDING READ PERMISSIONS TO " << ot << " ON CLIENT " << t << RESET << '\n';
+      }
+    }
+  }
+  // std::cout << RED << "INSERTING VECTOR!" << RESET << '\n';
+  _sc->insertVector(t, tid, v);
+  return 0;
+  // std::cerr << getUTCTime() << RED << " [ERROR] Impossible to update client stream (token not found)!" << RESET << '\n';
+  // return -1;
 }
 
 void Manager::debugPrint() {
@@ -113,4 +139,14 @@ void Manager::debugPrint() {
   for (ClientList::iterator sc = myClients.begin(); sc != myClients.end(); sc++) {
     Console::log(getUTCTime() + " Client n." + str(i++) + " uses token " + str(sc->token()), Color::Cyan);
   }
+}
+
+const std::list<ClientTID> Manager::getTIDHistory(ClientToken tk) {
+  for (ClientList::iterator sc = myClients.begin(); sc != myClients.end(); sc++) {
+    if (sc->token() == tk) {
+      return sc->tidHistory();
+    }
+  }
+  std::cerr << "Argh! No history found\n"; // TODO
+  return std::list<ClientTID>();
 }

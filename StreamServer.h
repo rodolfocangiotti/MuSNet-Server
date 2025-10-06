@@ -6,6 +6,7 @@
 #include "ThreadPool.h"
 #include "UDPListener.h"
 #include "UDPResponse.h"
+#include "UDPSender.h"
 #include "types.h"
 
 class StreamServer {
@@ -22,7 +23,9 @@ private:
   TCPListener myTCPListnr;
   UDPListener myUDPListnr;
   UDPResponse myUDPResp;
+  UDPSender myUDPSendr;
   ThreadPool<UDPResponse> myUDPThrds;
+  ThreadPool<UDPSender> myUDPOthrThrds;
 };
 
 #endif

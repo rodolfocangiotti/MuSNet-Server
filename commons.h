@@ -12,8 +12,8 @@
 #define UDP_BUFFER_SIZE 265  // That is sizeof (Header) + sizeof (Token) + sizeof (TID) + sizeof (Size) + sizeof (AudioSample) * AUDIO_VECTOR_SIZE * NUM_CHANNELS...
 // Header, token, TID and size are 9 bytes...
 
-#define MIN_QUEUE_LENGTH 3  // Considering sample rate and vector size, this directive adds ~20 milliseconds delay in client applications...
-#define MAX_QUEUE_LENGTH 64
+#define MIN_QUEUE_LENGTH 2  // Considering sample rate and vector size, this directive adds ~20 milliseconds delay in client applications...
+#define MAX_QUEUE_LENGTH 4
 
 #ifndef NUM_THREADS
 #define NUM_THREADS 1
@@ -32,5 +32,12 @@ enum headers {
 };
 
 #define str(n) std::to_string(n)
+
+#ifndef REDUDANCY_FACTOR
+#define REDUDANCY_FACTOR 1 // 2
+#endif
+
+#define UDP_SEND_WAIT 180   // Microseconds...
+                            // 110 is a reference value to use 20Mbit/sec bandwidth with 64 sample DSP block...
 
 #endif

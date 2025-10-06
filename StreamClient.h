@@ -19,6 +19,8 @@ public:
   ~StreamClient();
   // ********************
   ClientToken token() const;
+  bool isWaiting() const;
+  const std::list<ClientTID>& tidHistory() const;
   // ********************
   ClientTID getNewResponseTID();
   // ********************
@@ -37,6 +39,8 @@ private:
   ClientToken myToken;  // Client code...
   // ********************
   int myQueueMaxSize;
+  bool waiting;
+  std::list<ClientTID> tidHisto;
 };
 
 #endif

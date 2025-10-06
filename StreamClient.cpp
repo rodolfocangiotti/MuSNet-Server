@@ -15,7 +15,8 @@ StreamClient::StreamClient(const ClientToken t):
   myReaders(),
   myLastResp(0),
   myToken(t),
-  myQueueMaxSize(0) {
+  myQueueMaxSize(0),
+  waiting(true) {
 #if defined(DEBUG) && VERBOSENESS > 2
   Console::log(getUTCTime() + " [DEBUG] Constructing StreamClient class...");
 #endif
@@ -31,6 +32,13 @@ ClientToken StreamClient::token() const {
   return myToken;
 }
 
+bool StreamClient::isWaiting() const {
+  return waiting;
+}
+
+const std::list<ClientTID>& StreamClient::tidHistory() const {
+  return tidHisto;
+}
 
 ClientTID StreamClient::getNewResponseTID() {
   return ++myLastResp;
@@ -68,7 +76,20 @@ int StreamClient::removeReader(const ClientToken ot) {
 
 void StreamClient::insertVector(const ClientToken mt, const ClientTID wtid, const AudioVector& v) {
   assert(mt == myToken);
+  // TODO
+  if (waiting) {
+    waiting = false;
+    std::cout << GREEN << "CLIENT " << mt << " IS NO MORE WAITING!" << RESET << '\n';
+  }
+  // EOT
   if (myReaders.size() > 0) {
+    // TODO
+    tidHisto.push_back(wtid);
+    while (tidHisto.size() > 16) {
+      tidHisto.pop_front();
+      // std::cout << "Removing TID from history...\n";
+    }
+    // EOT
     StreamVector sv;
     sv.setOwner(mt);
     sv.setTID(wtid);
@@ -76,6 +97,12 @@ void StreamClient::insertVector(const ClientToken mt, const ClientTID wtid, cons
     for (ReadManager::iterator t = myReaders.begin(); t != myReaders.end(); t++) {
       sv.addReadPermission(*t);
     }
+    // TODO
+    if (myQueue.size() >= MAX_QUEUE_LENGTH) {
+      myQueue.clear();
+      std::cout << "Client " << str(myToken) << ": queue has been reset" << '\n';
+    }
+    // EOT
     myQueue.push_back(sv);
     myQueue.sort(comp);
 
