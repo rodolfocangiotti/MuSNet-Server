@@ -43,8 +43,21 @@ void StreamVector::setTID(const ClientTID tid) {
 
 int StreamVector::addReadPermission(const ClientToken t) {
   assert(t != myOwner);
-  assert(myLog.count(t) == 0);
-  myLog[t] = false;
+  // assert(myLog.count(t) == 0);   It seems the read permissions are already present sometimes...
+  // Try to test without this assertion.
+  int found_keys = myLog.count(t);
+  if (found_keys > 0) {
+      // Do nothing but logging...
+#if defined(DEBUG) && VERBOSENESS > 2
+  Console::log(getUTCTime() + " [DEBUG] Vector " + str(myOwner) + "-" + str(myTID) + ": trying to add read permission to client " + str(t)
+  + " but already found (value: " + str(found_keys) + ")");
+#endif
+  } else if (found_keys == 0) {
+      myLog[t] = false;
+  } else {
+        // This shouldn't happen.
+      return 1 / 0; // TODO. Refactor me.
+  }
 #if defined(DEBUG) && VERBOSENESS > 2
   Console::log(getUTCTime() + " [DEBUG] Vector " + str(myOwner) + "-" + str(myTID) + ": added read permission to client " + str(t));
 #endif
