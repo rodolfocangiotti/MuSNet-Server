@@ -85,6 +85,17 @@ AudioVector Manager::getOtherClientStreams(const ClientToken t) {
       v[j] += o[j];
     }
   }
+  // TODO: To remove this.
+  bool empty = true;
+  for (int i {0}; i < v.size(); i++) {
+    if (v[i] != 0.0) {
+      empty = false;
+      break;
+    }
+  }
+  if (empty) {
+    std::cout << "getOtherClientStreams: returning empty vector for token " << t << '\n';
+  }
   return v;
 }
 
