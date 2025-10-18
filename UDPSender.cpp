@@ -2,6 +2,7 @@
 #include <iostream>
 #include "Chrono.h"
 #include "Console.h"
+#include "Profiler.h"
 #include "UDPSender.h"
 
 double average(double x) {
@@ -63,11 +64,13 @@ UDPSender::~UDPSender() {
 }
 
 void UDPSender::operator()(RequestInfo& r) {
+  const UDPDatagram& reqstDatagram = r.referDatagram();
+  Profiler::add_record(reqstDatagram.token(), reqstDatagram.tid(), Profiler::OperationID::RESPONSE_START);
   struct sockaddr_in addrss = r.address();
   socklen_t addrssLen = r.addressLength();
   SocketFD sockFD = r.fileDescriptor();
   // Time e = r.receiptTime(); TODO
-  const UDPDatagram& reqstDatagram = r.referDatagram();
+
 // 29/05/2021
 // #if defined(DEBUG) && VERBOSENESS > 1
 //   double d = Chrono::timeDelta();
@@ -77,6 +80,7 @@ void UDPSender::operator()(RequestInfo& r) {
   if (bytes < 0) { // TODO Test it!
     perror("sendto()");
   }
+  Profiler::add_record(reqstDatagram.token(), reqstDatagram.tid(), Profiler::OperationID::UDP_DISPATCH);
   // 29/05/2021
   // RESTORE OLD DURATION TIME MONITORING...
   //Time now = std::chrono::high_resolution_clock::now();

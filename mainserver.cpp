@@ -4,6 +4,7 @@
 #include <chrono>
 #include <iostream>
 #include "Console.h"
+#include "Profiler.h"
 #include "StreamServer.h"
 #include "prettyprint.h"
 
@@ -26,6 +27,7 @@ int main(int argc, const char* argv[]) {
     }
     Console::stop();
     s.stop();
+    Profiler::print_statistics();
   } catch (std::exception& e) {
     std::cerr << RED << e.what() << RESET << '\n';
   }

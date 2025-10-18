@@ -2,6 +2,7 @@
 #include <iostream>
 #include "Chrono.h"
 #include "Console.h"
+#include "Profiler.h"
 #include "UDPResponse.h"
 #include "commons.h"
 #include "prettyprint.h"
@@ -51,6 +52,7 @@ void UDPResponse::operator()(RequestInfo& r) {
   if (reqstDatagram.header() == AUDIO_STREAM_DATA) {
     ClientToken t = reqstDatagram.token();
     ClientTID reqstTID = reqstDatagram.tid();
+    Profiler::add_record(t, reqstTID, Profiler::OperationID::RESPONSE_START);
     ClientTID respTID = 0;
     AudioVector fromClient = reqstDatagram.streamCopy();
     AudioVector toClient;
@@ -69,6 +71,7 @@ void UDPResponse::operator()(RequestInfo& r) {
       toClient = myManager.getOtherClientStreams(t);  // Compute the response stream to client...
       respTID = myManager.getClientResponseTID(t);
     }
+    Profiler::add_record(t, reqstTID, Profiler::OperationID::RESPONSE_END);
     if (respTID > 0) {
       // Use another reference to the same object to change its content...
       UDPDatagram& writableReqstDatagram = r.referWritableDatagram();
@@ -84,6 +87,7 @@ void UDPResponse::operator()(RequestInfo& r) {
         //   perror("sendto()");
         // }
         myUDPSendr.append(r);
+        Profiler::add_record(t, reqstTID, Profiler::OperationID::DISPATCH_PENDING);
       }
     }
 

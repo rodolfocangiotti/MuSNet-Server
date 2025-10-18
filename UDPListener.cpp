@@ -4,6 +4,7 @@
 #include <iostream>
 #include "Chrono.h"
 #include "Console.h"
+#include "Profiler.h"
 #include "UDPListener.h"
 #include "commons.h"
 #include "prettyprint.h"
@@ -116,7 +117,7 @@ void UDPListener::listen() {
       continue;
     }
 
-    Chrono::setPoint();
+    Profiler::add_record(reqstDatagram.token(), reqstDatagram.tid(), Profiler::OperationID::UDP_RECEIPT);
 #if defined(DEBUG) && VERBOSENESS > 2
     Console::log(getUTCTime() + " [DEBUG] Datagram received!");
 #endif
@@ -124,6 +125,7 @@ void UDPListener::listen() {
     myRequestInfo.setAddress(&clieAddrss, &clieAddrssLen);
     myRequestInfo.setReceiptTime(std::chrono::high_resolution_clock::now());
     myThreadPool.append(myRequestInfo);
+    Profiler::add_record(reqstDatagram.token(), reqstDatagram.tid(), Profiler::OperationID::RESPONSE_PENDING);
     currSet = nextSet;
     myTimeout = T;
   }
