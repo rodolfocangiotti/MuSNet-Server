@@ -13,7 +13,7 @@
 // Header, token, TID and size are 9 bytes...
 
 #define MIN_QUEUE_LENGTH 2  // Considering sample rate and vector size, this directive adds ~20 milliseconds delay in client applications...
-#define MAX_QUEUE_LENGTH 4
+#define MAX_QUEUE_LENGTH 16
 
 #ifndef NUM_THREADS
 #define NUM_THREADS 1
