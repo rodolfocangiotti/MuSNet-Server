@@ -30,6 +30,7 @@ int main(int argc, const char* argv[]) {
     Console::stop();
     s.stop();
     Profiler::print_statistics();
+    Profiler::export_records(EXPORT_RECORDS_FOLDER);
   } catch (std::exception& e) {
     std::cerr << RED << e.what() << RESET << '\n';
   }

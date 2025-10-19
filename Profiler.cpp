@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <list>
+#include <fstream>
 #include <unordered_map>
 #include "Profiler.h"
 
@@ -60,10 +61,9 @@ void Profiler::print_statistics() {
     RecordMap record_map;
     {
         Locker lock_guard(_mutex);
-        while (_records.begin() != _records.end()) {
-            Record record = _records.back();
+        for (RecordLog::iterator it = _records.begin(); it != _records.end(); it++) {
+            Record record = *it;
             record_map[record.token].emplace_back(record);
-            _records.pop_back();
         }
     }
     uint64_t to_response_pending_count = 0;
@@ -132,7 +132,15 @@ void Profiler::print_statistics() {
 }
 
 void Profiler::export_records(std::string file_path) {
-    // TODO
+    std::ofstream log_file;
+    log_file.open ("stats.csv");
+    {
+        Locker lock_guard(_mutex);
+        for (RecordLog::iterator it = _records.begin(); it != _records.end(); it++) {
+            log_file << it->token << ',' << it->transaction << ',' << it->operation << ',' << it->timestamp << std::endl;
+        }
+    }
+    log_file.close();
 }
 
 std::mutex Profiler::_mutex;

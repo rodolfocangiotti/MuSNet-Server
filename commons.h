@@ -40,4 +40,8 @@ enum headers {
 #define UDP_SEND_WAIT 180   // Microseconds...
                             // 110 is a reference value to use 20Mbit/sec bandwidth with 64 sample DSP block...
 
+#ifndef EXPORT_RECORDS_FOLDER
+#define EXPORT_RECORDS_FOLDER "/home/ubuntu/muslogs/"
+#endif
+
 #endif

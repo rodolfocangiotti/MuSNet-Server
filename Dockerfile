@@ -15,6 +15,8 @@ WORKDIR /home/ubuntu/MuSNet-Server
 RUN git checkout beta_draft
 RUN g++ -std=c++11 -DDEBUG -DVERBOSENESS=3 -omainserver *.cpp
 
+RUN mkdir -v /home/ubuntu/muslogs
+
 EXPOSE 50000
 EXPOSE 50001/udp
 
