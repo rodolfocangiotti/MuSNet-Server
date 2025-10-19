@@ -15,6 +15,7 @@ void signalHandler(int signum) {
 }
 
 int main(int argc, const char* argv[]) {
+  signal(SIGINT, signalHandler);
   signal(SIGTERM, signalHandler);
   try {
     Console::start();
@@ -25,6 +26,7 @@ int main(int argc, const char* argv[]) {
     while (::running) {
       std::this_thread::sleep_for(std::chrono::seconds(1));
     }
+    std::cout << "Exiting..." << std::endl;
     Console::stop();
     s.stop();
     Profiler::print_statistics();
