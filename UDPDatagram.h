@@ -18,8 +18,12 @@ public:
   ClientTID tid() const;
   StreamSize streamSize() const;
   AudioVector streamCopy() const;
+  ClientTID parentTID() const;
   // ********************
   void buildAudioStream(const ClientToken t, const ClientTID tid, const AudioVector& v);
+  void setParentTID(const ClientTID tid);
+private:
+  ClientTID myParentTID;
 };
 
 #endif

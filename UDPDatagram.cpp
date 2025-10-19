@@ -69,3 +69,11 @@ void UDPDatagram::buildAudioStream(const ClientToken t, const ClientTID tid, con
     asp[i] = v[i];
   }
 }
+
+void UDPDatagram::setParentTID(ClientTID tid) {
+  myParentTID = tid;
+}
+
+ClientTID UDPDatagram::parentTID() const {
+  return myParentTID;
+}
