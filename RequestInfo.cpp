@@ -27,7 +27,7 @@ void RequestInfo::setFileDescriptor(const SocketFD s) {
   mySockFD = s;
 }
 
-void RequestInfo::setReceiptTime(const Time& e) {
+void RequestInfo::setReceiptTime(const HighResolutionTime& e) {
   myRecptTime = e;
 }
 
@@ -43,7 +43,7 @@ SocketFD RequestInfo::fileDescriptor() const {
   return mySockFD;
 }
 
-Time RequestInfo::receiptTime() const {
+HighResolutionTime RequestInfo::receiptTime() const {
   return myRecptTime;
 }
 

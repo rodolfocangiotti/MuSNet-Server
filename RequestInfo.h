@@ -16,12 +16,12 @@ public:
   // ********************
   void setAddress(const struct sockaddr_in* addrss, const socklen_t* addrssLen);
   void setFileDescriptor(const SocketFD s);
-  void setReceiptTime(const Time& e);
+  void setReceiptTime(const HighResolutionTime& e);
   // ********************
   struct sockaddr_in address() const;
   socklen_t addressLength() const;
   SocketFD fileDescriptor() const;
-  Time receiptTime() const;
+  HighResolutionTime receiptTime() const;
   // ********************
   const UDPDatagram& referDatagram() const;
   UDPDatagram& referWritableDatagram();
@@ -32,7 +32,7 @@ private:
   // ********************
   UDPDatagram myDatagram;
   // ********************
-  Time myRecptTime;
+  HighResolutionTime myRecptTime;
 };
 
 #endif
