@@ -12,7 +12,7 @@ WORKDIR /home/ubuntu
 RUN --mount=type=ssh GIT_SSH_COMMAND="ssh -v" git clone git@github.com:rodolfocangiotti/MuSNet-Server
 
 WORKDIR /home/ubuntu/MuSNet-Server
-RUN git checkout beta_draft
+RUN git checkout tcp_audio_stream
 RUN g++ -std=c++11 -DDEBUG -DVERBOSENESS=3 -omainserver *.cpp
 
 RUN mkdir -v /home/ubuntu/muslogs

@@ -7,9 +7,9 @@
 #include <queue>
 #include <thread>
 #include <vector>
-#include "RequestInfo.h"
+#include "commons.h"
 
-template <typename T>
+template <typename T, typename R>
 class ThreadPool {
 public:
   ThreadPool(T& t, uint numThreads = NUM_THREADS);
@@ -17,7 +17,7 @@ public:
   // ********************
   void start();
   void stop();
-  void append(const RequestInfo& r);
+  void append(const R& r);
 private:
   void thread();
   // ********************
@@ -25,7 +25,7 @@ private:
   // ********************
   std::condition_variable myCondVar;
   std::mutex myMutex;
-  std::queue<RequestInfo> myQueue;
+  std::queue<R> myQueue;
   std::vector<std::thread> myThreads;
   bool running;
   // ********************

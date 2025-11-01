@@ -2,20 +2,20 @@
 #define UDP_RESPONSE_H
 
 #include "Manager.h"
-#include "RequestInfo.h"
 #include "ThreadPool.h"
 #include "UDPDatagram.h"
+#include "UDPRequestInfo.h"
 #include "UDPSender.h"
 
 class UDPResponse {
 public:
-  UDPResponse(Manager& m, ThreadPool<UDPSender>& tp);
+  UDPResponse(Manager& m, ThreadPool<UDPSender, UDPRequestInfo>& tp);
   ~UDPResponse();
   // ********************
-  void operator()(RequestInfo& r);
+  void operator()(UDPRequestInfo& r);
 private:
   Manager& myManager;
-  ThreadPool<UDPSender>& myUDPSendr;
+  ThreadPool<UDPSender, UDPRequestInfo>& myUDPSendr;
 };
 
 #endif

@@ -2,11 +2,11 @@
 #define UDP_DATAGRAM_H
 
 #include <cstdint>
-#include "Payload.h"
+#include "StreamPayload.h"
 #include "commons.h"
 #include "types.h"
 
-class UDPDatagram: public Payload {
+class UDPDatagram: public StreamPayload {
 public:
   typedef uint8_t Mode;
   typedef uint16_t StreamSize;
@@ -14,13 +14,8 @@ public:
   UDPDatagram(const MaxSize ms);
   ~UDPDatagram();
   // ********************
-  ClientToken token() const;
-  ClientTID tid() const;
-  StreamSize streamSize() const;
-  AudioVector streamCopy() const;
   ClientTID parentTID() const;
   // ********************
-  void buildAudioStream(const ClientToken t, const ClientTID tid, const AudioVector& v);
   void setParentTID(const ClientTID tid);
 private:
   ClientTID myParentTID;

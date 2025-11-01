@@ -21,15 +21,16 @@ const char* TCPListenerException::what() const noexcept {
   return error.c_str();
 }
 
-TCPListener::TCPListener(Manager& m):
+TCPListener::TCPListener(Manager& m, ThreadPool<TCPResponse, TCPRequestInfo>& tp):
   mySockFD(0),
   myAddrss(), clieAddrss(),
   myAddrssLen(0), clieAddrssLen(0),
   myManager(m),
-  mySegment(TCP_BUFFER_SIZE),
   active(false),
   myMutex(),
-  myThread() {
+  myThread(),
+  myThreadPool(tp),
+  myRequestInfo(UDP_BUFFER_SIZE) {
 #if defined(DEBUG) && VERBOSENESS > 2
   Console::log(getUTCTime() + " [DEBUG] Constructing TCPListener class...");
 #endif
@@ -98,6 +99,7 @@ void TCPListener::listen() {
   struct timeval timeout = {1, 0}; // Define a timeout of 1 second...
   struct timeval T = timeout;
 
+  TCPSegment& request_segment = myRequestInfo.refer_writable_segment();
   while (listening()) {
     // Receive segment from client...
     int descrAmount = select(currMaxFD + 1, &currSet, NULL, NULL, &timeout);
@@ -132,7 +134,7 @@ void TCPListener::listen() {
           }
         } else {
           // ***** RECEIVE BLOCK *****
-          int bytes = receive(i, mySegment.pointWritableBuffer(), TCP_BUFFER_SIZE);
+          int bytes = receive(i, request_segment.pointWritableBuffer(), UDP_BUFFER_SIZE);
           if (bytes < 0 ) {
             perror("recv()");
           } else if (bytes == 0) {  // Client is disconnected...
@@ -151,28 +153,34 @@ void TCPListener::listen() {
             }
           } else {
             // Manage received message
-            if (mySegment.header() == ENTRY_REQUEST) {
+            if (request_segment.header() == ENTRY_REQUEST) {
               ClientToken t = myManager.addClient();
               if (t < 0) {
                 std::cerr << getUTCTime() << RED << " [ERROR] Impossible to add client!" << RESET << '\n';
                 continue;
                 // TODO Add error response!
               }
-              mySegment.buildEntryResponse(t);
-            } else if (mySegment.header() == EXIT_REQUEST) {
-              ClientToken t = mySegment.token();
+              request_segment.buildEntryResponse(t);
+            } else if (request_segment.header() == EXIT_REQUEST) {
+              ClientToken t = request_segment.token();
               int res = myManager.removeClient(t);
               if (res < 0) {
                 std::cerr << getUTCTime() << RED << " [ERROR] Impossible to remove client!" << RESET << '\n';
                 continue;
               }
-              mySegment.buildExitResponse();
+              request_segment.buildExitResponse();
+            } else if (request_segment.header() == AUDIO_STREAM_DATA) {
+              myRequestInfo.setFileDescriptor(i);
+              myRequestInfo.setAddress(&clieAddrss, &clieAddrssLen);
+              myRequestInfo.setReceiptTime(std::chrono::high_resolution_clock::now());
+              myThreadPool.append(myRequestInfo);
+              continue; // Response send is managed in a separate thread, in this case...
             } else {
-              std::cerr << getUTCTime() << RED << " [ERROR] Not consistent header of TCP segment!" << RESET << '\n';
+              std::cerr << getUTCTime() << RED << " [ERROR] Not consistent header (" << request_segment.header() << ") of TCP segment!" << RESET << '\n';
               continue;
               // TODO Add error response!
             }
-            int bytes = send(i, mySegment.rawBuffer(), mySegment.size());
+            int bytes = send(i, request_segment.rawBuffer(), request_segment.size());
             if (bytes < 0) {
               perror("send");
             }

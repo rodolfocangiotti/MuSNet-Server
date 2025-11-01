@@ -3,10 +3,10 @@
 #include "RequestInfo.h"
 #include "utils.h"
 
-RequestInfo::RequestInfo(const BufferSize bs):
-  myAddrss(), myAddrssLen(0),
+RequestInfo::RequestInfo():
+  myAddrss(),
+  myAddrssLen(0),
   mySockFD(0),
-  myDatagram(bs),
   myRecptTime() {
 #if defined(DEBUG) && VERBOSENESS > 2
   Console::log(getUTCTime() + " [DEBUG] Constructing RequestInfo class...");
@@ -45,12 +45,4 @@ SocketFD RequestInfo::fileDescriptor() const {
 
 HighResolutionTime RequestInfo::receiptTime() const {
   return myRecptTime;
-}
-
-const UDPDatagram& RequestInfo::referDatagram() const {
-  return myDatagram;
-}
-
-UDPDatagram& RequestInfo::referWritableDatagram() {
-  return myDatagram;
 }

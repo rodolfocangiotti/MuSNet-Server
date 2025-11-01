@@ -63,7 +63,7 @@ UDPSender::~UDPSender() {
 #endif
 }
 
-void UDPSender::operator()(RequestInfo& r) {
+void UDPSender::operator()(UDPRequestInfo& r) {
   const UDPDatagram& reqstDatagram = r.referDatagram();
   Profiler::add_record(reqstDatagram.token(), reqstDatagram.tid(), Profiler::OperationID::DISPATCH_START);
   struct sockaddr_in addrss = r.address();

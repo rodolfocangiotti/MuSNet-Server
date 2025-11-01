@@ -4,7 +4,10 @@
 #include <arpa/inet.h>
 #include <thread>
 #include "Manager.h"
+#include "TCPRequestInfo.h"
+#include "TCPResponse.h"
 #include "TCPSegment.h"
+#include "ThreadPool.h"
 #include "types.h"
 
 class TCPListenerException: public std::exception {
@@ -18,7 +21,7 @@ private:
 
 class TCPListener {
 public:
-  TCPListener(Manager& m);
+  TCPListener(Manager& m, ThreadPool<TCPResponse, TCPRequestInfo>& tp);
   ~TCPListener();
   // ********************
   void configure(const PortNum pn);
@@ -39,7 +42,8 @@ private:
   socklen_t myAddrssLen, clieAddrssLen;
   // ********************
   Manager& myManager;
-  TCPSegment mySegment;
+  TCPRequestInfo myRequestInfo;
+  ThreadPool<TCPResponse, TCPRequestInfo>& myThreadPool;
   // ********************
   bool active;
   std::mutex myMutex;

@@ -1,0 +1,71 @@
+#include <cassert>
+#include <iostream>
+#include "Console.h"
+#include "StreamPayload.h"
+#include "commons.h"
+#include "utils.h"
+
+StreamPayload::StreamPayload(const MaxSize ms):
+  Payload(ms) {
+#if defined(DEBUG) && VERBOSENESS > 2
+  Console::log(getUTCTime() + " [DEBUG] Constructing StreamPayload class...");
+#endif
+}
+
+StreamPayload::~StreamPayload() {
+#if defined(DEBUG) && VERBOSENESS > 2
+  Console::log(getUTCTime() + " [DEBUG] Destructing StreamPayload class...");
+#endif
+}
+
+ClientToken StreamPayload::token() const {
+  const Byte* bp = &(myBuff[1]);
+  const ClientToken* tp = reinterpret_cast<const ClientToken*>(bp);
+  return *tp;
+}
+
+ClientTID StreamPayload::tid() const {
+  const Byte* bp = &(myBuff[3]);
+  const ClientTID* tidp = reinterpret_cast<const ClientTID*>(bp);
+  return *tidp;
+}
+
+StreamPayload::StreamSize StreamPayload::streamSize() const {
+  const Byte* bp = &(myBuff[7]);
+  const StreamSize* ssp = reinterpret_cast<const StreamSize*>(bp);
+  return *ssp;
+}
+
+AudioVector StreamPayload::streamCopy() const { // This method returns a copy of the audio streaming content...
+  const Byte* bp = &(myBuff[7]);
+  const StreamSize* ssp = reinterpret_cast<const StreamSize*>(bp);
+  bp = &(myBuff[9]);
+  const AudioSample* asp = reinterpret_cast<const AudioSample*>(bp);
+  AudioVector v(*ssp);
+  for (int i = 0; i < v.size(); i++) {
+    v[i] = asp[i];
+  }
+  return v;
+}
+
+void StreamPayload::buildAudioStream(const ClientToken t, const ClientTID tid, const AudioVector& v) {
+  mySize = sizeof (Header) + sizeof (ClientToken) + sizeof (ClientTID) + sizeof (Size) + sizeof (AudioSample) * v.size();
+  assert(mySize <= myBuff.size());
+  Byte* bp = &(myBuff[0]);
+  Header* hp = static_cast<Header*>(bp);
+  *hp = AUDIO_STREAM_DATA;
+  bp = &(myBuff[1]);
+  ClientToken* tp = reinterpret_cast<ClientToken*>(bp);
+  *tp = t;
+  bp = &(myBuff[3]);
+  ClientTID* tidp = reinterpret_cast<ClientTID*>(bp);
+  *tidp = tid;
+  bp = &(myBuff[7]);
+  StreamSize* sp = reinterpret_cast<StreamSize*>(bp);
+  *sp = v.size();
+  bp = &(myBuff[9]);
+  AudioSample* asp = reinterpret_cast<AudioSample*>(bp);
+  for (int i = 0; i < v.size(); i++) {
+    asp[i] = v[i];
+  }
+}

@@ -1,13 +1,15 @@
 #include <iostream>
 #include "Console.h"
-#include "RequestInfo.h"
+#include "TCPRequestInfo.h"
+#include "TCPResponse.h"
 #include "ThreadPool.h"
+#include "UDPRequestInfo.h"
 #include "UDPResponse.h"
 #include "commons.h"
 #include "utils.h"
 
-template <typename T>
-ThreadPool<T>::ThreadPool(T& t, uint numThreads):
+template <typename T, typename R>
+ThreadPool<T, R>::ThreadPool(T& t, uint numThreads):
   myTask(t),
   myCondVar(),
   myMutex(),
@@ -20,27 +22,27 @@ ThreadPool<T>::ThreadPool(T& t, uint numThreads):
 #endif
 }
 
-template <typename T>
-ThreadPool<T>::~ThreadPool() {
+template <typename T, typename R>
+ThreadPool<T, R>::~ThreadPool() {
 #if defined(DEBUG) && VERBOSENESS > 2
   Console::log(getUTCTime() + " [DEBUG] Destructing ThreadPool class...");
 #endif
   stop();
 }
 
-template <typename T>
-void ThreadPool<T>::start() {
+template <typename T, typename R>
+void ThreadPool<T, R>::start() {
   std::unique_lock<std::mutex> l(myMutex);
   if (!(running)) {
     for (auto& thrd: myThreads) {
-      thrd = std::thread(&ThreadPool<T>::thread, this);
+      thrd = std::thread(&ThreadPool<T, R>::thread, this);
     }
     running = true;
   }
 }
 
-template <typename T>
-void ThreadPool<T>::stop() {
+template <typename T, typename R>
+void ThreadPool<T, R>::stop() {
   bool join = false;
   {
     std::unique_lock<std::mutex> l(myMutex);
@@ -59,8 +61,8 @@ void ThreadPool<T>::stop() {
   }
 }
 
-template <typename T>
-void ThreadPool<T>::append(const RequestInfo& r) {
+template <typename T, typename R>
+void ThreadPool<T, R>::append(const R& r) {
   size_t queueSize = 0;
   {
     std::unique_lock<std::mutex> l(myMutex);
@@ -85,9 +87,9 @@ void ThreadPool<T>::append(const RequestInfo& r) {
 #endif
 }
 
-template <typename T>
-void ThreadPool<T>::thread() {
-  RequestInfo r(UDP_BUFFER_SIZE);
+template <typename T, typename R>
+void ThreadPool<T, R>::thread() {
+  R r(UDP_BUFFER_SIZE);
   unsigned int thrdNum = ++myThrdCounter;
   while (true) {
     {
@@ -114,5 +116,6 @@ void ThreadPool<T>::thread() {
   }
 }
 
-template class ThreadPool<UDPResponse>;
-template class ThreadPool<UDPSender>;
+template class ThreadPool<TCPResponse, TCPRequestInfo>;
+template class ThreadPool<UDPResponse, UDPRequestInfo>;
+template class ThreadPool<UDPSender, UDPRequestInfo>;

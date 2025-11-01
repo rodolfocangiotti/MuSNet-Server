@@ -6,7 +6,7 @@
 #include "utils.h"
 
 TCPSegment::TCPSegment(const MaxSize ms):
-  Payload(ms) {
+  StreamPayload(ms) {
 #if defined(DEBUG) && VERBOSENESS > 2
   Console::log(getUTCTime() + " [DEBUG] Constructing TCPSegment class...");
 #endif
@@ -16,12 +16,6 @@ TCPSegment::~TCPSegment() {
 #if defined(DEBUG) && VERBOSENESS > 2
   Console::log(getUTCTime() + " [DEBUG] Destructing TCPSegment class...");
 #endif
-}
-
-ClientToken TCPSegment::token() const {
-  const Byte* bp = &(myBuff[1]);
-  const ClientToken* tp = reinterpret_cast<const ClientToken*>(bp);
-  return *tp;
 }
 
 void TCPSegment::buildEntryRequest() {

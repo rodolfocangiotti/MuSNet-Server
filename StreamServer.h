@@ -3,8 +3,11 @@
 
 #include "Manager.h"
 #include "TCPListener.h"
+#include "TCPRequestInfo.h"
+#include "TCPResponse.h"
 #include "ThreadPool.h"
 #include "UDPListener.h"
+#include "UDPRequestInfo.h"
 #include "UDPResponse.h"
 #include "UDPSender.h"
 #include "types.h"
@@ -21,11 +24,13 @@ private:
   bool active;
   Manager myManager;
   TCPListener myTCPListnr;
+  TCPResponse _tcp_response;
+  ThreadPool<TCPResponse, TCPRequestInfo> _tcp_response_threads;
   UDPListener myUDPListnr;
   UDPResponse myUDPResp;
   UDPSender myUDPSendr;
-  ThreadPool<UDPResponse> myUDPThrds;
-  ThreadPool<UDPSender> myUDPOthrThrds;
+  ThreadPool<UDPResponse, UDPRequestInfo> myUDPThrds;
+  ThreadPool<UDPSender, UDPRequestInfo> myUDPOthrThrds;
 };
 
 #endif

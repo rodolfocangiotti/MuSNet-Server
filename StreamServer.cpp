@@ -8,7 +8,9 @@
 StreamServer::StreamServer():
   active(false),
   myManager(),
-  myTCPListnr(myManager),
+  myTCPListnr(myManager, _tcp_response_threads),
+  _tcp_response(myManager),
+  _tcp_response_threads(_tcp_response),
   myUDPListnr(myUDPThrds),
   myUDPResp(myManager, myUDPOthrThrds),
   myUDPSendr(),
@@ -60,6 +62,7 @@ void StreamServer::start() {
 #if defined(DEBUG) && VERBOSENESS > 1
     Console::log(getUTCTime() + " [DEBUG] Starting thread pool...");
 #endif
+    _tcp_response_threads.start();
     myUDPThrds.start();
     myUDPOthrThrds.start();
     active = true;
@@ -79,6 +82,7 @@ void StreamServer::stop() {
 #if defined(DEBUG) && VERBOSENESS > 1
     Console::log(getUTCTime() + " [DEBUG] Stopping thread pool...");
 #endif
+    _tcp_response_threads.stop();
     myUDPThrds.stop();
     myUDPOthrThrds.stop();
     active = false;

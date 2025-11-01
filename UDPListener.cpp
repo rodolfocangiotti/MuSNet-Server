@@ -24,7 +24,7 @@ const char* UDPListenerException::what() const noexcept {
   return error.c_str();
 }
 
-UDPListener::UDPListener(ThreadPool<UDPResponse>& tp):
+UDPListener::UDPListener(ThreadPool<UDPResponse, UDPRequestInfo>& tp):
   mySockFD(0),
   myAddrss(), clieAddrss(),
   myAddrssLen(0), clieAddrssLen(0),

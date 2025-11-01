@@ -2,15 +2,13 @@
 #define TCP_SEGMENT_H
 
 #include <cstdint>
-#include "Payload.h"
+#include "StreamPayload.h"
 #include "types.h"
 
-class TCPSegment: public Payload {
+class TCPSegment: public StreamPayload {
 public:
   TCPSegment(const MaxSize ms);
   ~TCPSegment();
-  // ********************
-  ClientToken token() const;
   // ********************
   void buildEntryRequest();
   void buildEntryResponse(const ClientToken t);

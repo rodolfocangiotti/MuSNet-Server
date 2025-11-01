@@ -28,7 +28,7 @@
 //   return sum / static_cast<double>(mem.size());
 // }
 
-UDPResponse::UDPResponse(Manager& m, ThreadPool<UDPSender>& tp):
+UDPResponse::UDPResponse(Manager& m, ThreadPool<UDPSender, UDPRequestInfo>& tp):
   myManager(m),
   myUDPSendr(tp) {
 #if defined(DEBUG) && VERBOSENESS > 2
@@ -42,7 +42,7 @@ UDPResponse::~UDPResponse() {
 #endif
 }
 
-void UDPResponse::operator()(RequestInfo& r) {
+void UDPResponse::operator()(UDPRequestInfo& r) {
   // struct sockaddr_in addrss = r.address();
   // socklen_t addrssLen = r.addressLength();
   // SocketFD sockFD = r.fileDescriptor();
@@ -61,7 +61,7 @@ void UDPResponse::operator()(RequestInfo& r) {
       std::list<ClientTID> tids = myManager.getTIDHistory(t);
       for (std::list<ClientTID>::iterator it = tids.begin(); it != tids.end(); it++) {
         if (reqstTID == *it) {
-          std::cerr << RED << "[WARNING] Skipping duplicate request " << reqstTID << '\n';
+          std::cerr << RED << "[WARNING] Skipping UDP duplicate request " << reqstTID << '\n';
           return;
         }
       }

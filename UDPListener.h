@@ -4,8 +4,8 @@
 #include <arpa/inet.h>
 #include <thread>
 #include <vector>
-#include "RequestInfo.h"
 #include "ThreadPool.h"
+#include "UDPRequestInfo.h"
 #include "UDPResponse.h"
 #include "types.h"
 
@@ -20,7 +20,7 @@ private:
 
 class UDPListener {
 public:
-  UDPListener(ThreadPool<UDPResponse>& tp);
+  UDPListener(ThreadPool<UDPResponse, UDPRequestInfo>& tp);
   ~UDPListener();
   // ********************
   void configure(const PortNum pn);
@@ -41,8 +41,8 @@ private:
   socklen_t myAddrssLen, clieAddrssLen;
   struct timeval myTimeout;
   // ********************
-  RequestInfo myRequestInfo;
-  ThreadPool<UDPResponse>& myThreadPool;
+  UDPRequestInfo myRequestInfo;
+  ThreadPool<UDPResponse, UDPRequestInfo>& myThreadPool;
   // ********************
   bool active;
   std::mutex myMutex;
