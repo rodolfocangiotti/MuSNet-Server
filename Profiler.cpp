@@ -133,7 +133,7 @@ void Profiler::print_statistics() {
 
 void Profiler::export_records(std::string file_path) {
     std::ofstream log_file;
-    log_file.open ("stats.csv");
+    log_file.open(file_path + "statistics.csv");
     {
         Locker lock_guard(_mutex);
         for (RecordLog::iterator it = _records.begin(); it != _records.end(); it++) {
