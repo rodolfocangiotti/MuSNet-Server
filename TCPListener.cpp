@@ -197,8 +197,14 @@ void TCPListener::listen() {
           } else if (tcp_buffer[0] == AUDIO_STREAM_DATA) {
             int bytes = receive(i, tcp_buffer.data() + 1, 8);
             assert(bytes == 8);
-            TCPSegment::Size size = *(tcp_buffer.data() + 7);
-            assert(size == 128); // TODO Remove me!
+            TCPSegment::Size size = *(reinterpret_cast<TCPSegment::Size*>(tcp_buffer.data() + 7));
+#ifdef DEBUG
+            std::cout << "header: " << *(reinterpret_cast<TCPSegment::Header*>(tcp_buffer.data())) << std::endl;
+            std::cout << "token: " << *(reinterpret_cast<ClientToken*>(tcp_buffer.data() + 1)) << std::endl;
+            std::cout << "tid: " << *(reinterpret_cast<ClientTID*>(tcp_buffer.data() + 3)) << std::endl;
+            std::cout << "size: " << size << std::endl;
+#endif
+            assert(size == NUM_CHANNELS * AUDIO_VECTOR_SIZE);
             bytes = receive(i, tcp_buffer.data() + 9, size * sizeof (AudioSample));
             assert(bytes == size * sizeof (AudioSample));
             std::copy(tcp_buffer.data(), tcp_buffer.data() + UDP_BUFFER_SIZE, static_cast<uint8_t*>(request_segment.pointWritableBuffer()));
