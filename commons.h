@@ -17,7 +17,9 @@
 // ****************
 
 #define MIN_QUEUE_LENGTH 2  // Considering sample rate and vector size, this directive adds ~20 milliseconds delay in client applications...
+#ifndef MAX_QUEUE_LENGTH
 #define MAX_QUEUE_LENGTH 16
+#endif
 
 #ifndef NUM_THREADS
 #define NUM_THREADS 1
