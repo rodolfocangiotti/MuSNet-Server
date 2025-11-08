@@ -29,7 +29,7 @@ StreamServer::~StreamServer() {
 }
 
 void StreamServer::configure(PortNum tcpPN, PortNum udpPN) {
-  while (true) {
+  for (uint16_t i {0}; i < 5; i++) {
     try {
       myTCPListnr.configure(tcpPN);
       break;
@@ -38,7 +38,7 @@ void StreamServer::configure(PortNum tcpPN, PortNum udpPN) {
       std::this_thread::sleep_for(std::chrono::seconds(10));
     }
   }
-  while (true) {
+  for (uint16_t i {0}; i < 5; i++) {
     try {
       myUDPListnr.configure(udpPN);
       break;

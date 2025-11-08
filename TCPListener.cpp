@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include <cassert>
 #include <iostream>
+#include <string>
 #include "Console.h"
 #include "TCPListener.h"
 #include "commons.h"
@@ -103,7 +104,7 @@ void TCPListener::listen() {
   while (listening()) {
     // Receive segment from client...
     int descrAmount = select(currMaxFD + 1, &currSet, NULL, NULL, &timeout);
-    if (!(descrAmount > 0)) {
+    if (descrAmount <= 0) {
       if (descrAmount < 0) {
         perror("select()");
         std::cerr << getUTCTime() << RED << " [ERROR] Error receiving request/segment!" << RESET << '\n';
@@ -113,86 +114,130 @@ void TCPListener::listen() {
 #endif
       }
       currSet = nextSet;
+      currMaxFD = nextMaxFD;
       timeout = T;
       continue;
     }
     // ***** SOCKET ITERATION BLOCK ******
     for(int i = 0; i < currMaxFD + 1; i++) {
-      if (FD_ISSET(i, &currSet)) {
-        if (i == mySockFD) {
-          SocketFD newSockFD = accept(mySockFD, (struct sockaddr*) &clieAddrss, &clieAddrssLen);
-          if (newSockFD < 0) {
-            perror("accept()");
-            continue;
-          }
+      if (!(FD_ISSET(i, &currSet))) {
+        continue;
+      }
+
+      if (i == mySockFD) {
+        SocketFD newSockFD = accept(mySockFD, (struct sockaddr*) &clieAddrss, &clieAddrssLen);
+        if (newSockFD < 0) {
+          perror("accept()");
+          continue;
+        }
 #if defined(DEBUG) && VERBOSENESS > 0
-          Console::log(getUTCTime() + " [DEBUG] New TCP connection accepted!");
+        Console::log(getUTCTime() + " [DEBUG] New TCP connection accepted! (socket: " + str(newSockFD) + ')');
 #endif
-          FD_SET(newSockFD, &nextSet);
-          if (newSockFD > currMaxFD) {
-            nextMaxFD = newSockFD;
-          }
-        } else {
-          // ***** RECEIVE BLOCK *****
-          int bytes = receive(i, request_segment.pointWritableBuffer(), UDP_BUFFER_SIZE);
-          if (bytes < 0 ) {
+        FD_SET(newSockFD, &nextSet);
+        if (newSockFD > nextMaxFD) {
+          nextMaxFD = newSockFD;
+        }
+      } else {
+        // ***** RECEIVE BLOCK *****
+        // Try to receive the header first...
+        Buffer tcp_buffer(UDP_BUFFER_SIZE);
+        int bytes = receive(i, tcp_buffer.data(), 1, false);
+        if (bytes <= 0 ) {
+          if (bytes < 0) {
             perror("recv()");
-          } else if (bytes == 0) {  // Client is disconnected...
-            shutdown(SHUT_RDWR, i);
-            close(i);
+            if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) {
+              // Nothing to read right now...
+              continue;
+            } else if (errno == EINTR) {
+              // Interrupted, try later..
+              continue;
+            }
+            // For all the other errno-s connection should be closed...
+          }
+          shutdown(SHUT_RDWR, i);
+          close(i);
 #if defined(DEBUG) && VERBOSENESS > 0
-            Console::log(getUTCTime() + " [DEBUG] TCP connection closed!");
+          Console::log(getUTCTime() + " [DEBUG] TCP connection closed! (socket: " + str(i) + ')');
 #endif
-            FD_CLR(i, &nextSet);
-            if (i == currMaxFD) {
-              for (int j = 0; j < currMaxFD; j++) { // Update maximum file descriptor value...
-                if (FD_ISSET(j, &nextSet)) {
-                  nextMaxFD = j;
-                }
+          FD_CLR(i, &nextSet);
+          if (i == nextMaxFD) {
+            for (int j = 0; j < nextMaxFD + 1; j++) { // Update maximum file descriptor value...
+              if (FD_ISSET(j, &nextSet)) {
+                nextMaxFD = j;
               }
             }
-          } else {
-            // Manage received message
-            if (request_segment.header() == ENTRY_REQUEST) {
-              ClientToken t = myManager.addClient();
-              if (t < 0) {
-                std::cerr << getUTCTime() << RED << " [ERROR] Impossible to add client!" << RESET << '\n';
-                continue;
-                // TODO Add error response!
-              }
-              request_segment.buildEntryResponse(t);
-            } else if (request_segment.header() == EXIT_REQUEST) {
-              ClientToken t = request_segment.token();
-              int res = myManager.removeClient(t);
-              if (res < 0) {
-                std::cerr << getUTCTime() << RED << " [ERROR] Impossible to remove client!" << RESET << '\n';
-                continue;
-              }
-              request_segment.buildExitResponse();
-            } else if (request_segment.header() == AUDIO_STREAM_DATA) {
-              myRequestInfo.setFileDescriptor(i);
-              myRequestInfo.setAddress(&clieAddrss, &clieAddrssLen);
-              myRequestInfo.setReceiptTime(std::chrono::high_resolution_clock::now());
-              myThreadPool.append(myRequestInfo);
-              continue; // Response send is managed in a separate thread, in this case...
-            } else {
-              std::cerr << getUTCTime() << RED << " [ERROR] Not consistent header (" << request_segment.header() << ") of TCP segment!" << RESET << '\n';
+          }
+        } else {
+          assert(bytes == 1);
+          // Manage received message
+          if (tcp_buffer[0] == ENTRY_REQUEST) {
+            // This copy could be avoided...
+            // TODO: check this!
+            std::copy(tcp_buffer.data(), tcp_buffer.data() + 1, static_cast<uint8_t*>(request_segment.pointWritableBuffer()));
+            tcp_buffer.assign(UDP_BUFFER_SIZE, 0);  // Reset content...
+            ClientToken t = myManager.addClient();
+            if (t < 0) {
+              std::cerr << getUTCTime() << RED << " [ERROR] Impossible to add client!" << RESET << '\n';
               continue;
               // TODO Add error response!
             }
-            int bytes = send(i, request_segment.rawBuffer(), request_segment.size());
-            if (bytes < 0) {
-              perror("send");
+            request_segment.buildEntryResponse(t);
+          } else if (tcp_buffer[0] == EXIT_REQUEST) {
+            int bytes = receive(i, tcp_buffer.data() + 1, 2);
+            assert(bytes == 2);
+            std::copy(tcp_buffer.data(), tcp_buffer.data() + 3, static_cast<uint8_t*>(request_segment.pointWritableBuffer()));
+            tcp_buffer.assign(UDP_BUFFER_SIZE, 0);  // Reset content...
+            ClientToken t = request_segment.token();
+            int res = myManager.removeClient(t);
+            if (res < 0) {
+              std::cerr << getUTCTime() << RED << " [ERROR] Impossible to remove client!" << RESET << '\n';
+              continue;
             }
+            request_segment.buildExitResponse();
+          } else if (tcp_buffer[0] == AUDIO_STREAM_DATA) {
+            int bytes = receive(i, tcp_buffer.data() + 1, 8);
+            assert(bytes == 8);
+            TCPSegment::Size size = *(tcp_buffer.data() + 7);
+            assert(size == 128); // TODO Remove me!
+            bytes = receive(i, tcp_buffer.data() + 9, size * sizeof (AudioSample));
+            assert(bytes == size * sizeof (AudioSample));
+            std::copy(tcp_buffer.data(), tcp_buffer.data() + UDP_BUFFER_SIZE, static_cast<uint8_t*>(request_segment.pointWritableBuffer()));
+            tcp_buffer.assign(UDP_BUFFER_SIZE, 0);  // Reset content...
+            myRequestInfo.setFileDescriptor(i);
+            // myRequestInfo.setAddress(&clieAddrss, &clieAddrssLen);
+            myRequestInfo.setReceiptTime(std::chrono::high_resolution_clock::now());
+            myThreadPool.append(myRequestInfo);
+            continue; // Response send is managed in a separate thread, in this case...
+          } else {
+            std::cerr << getUTCTime() << RED << " [ERROR] Not consistent header (" << static_cast<uint8_t>(tcp_buffer[0]) << ") of TCP request!" << RESET << '\n';
+            continue;
+            // TODO Add error response!
           }
-          // ***** END OF RECEIVE BLOCK *****
+          int bytes = send(i, static_cast<const uint8_t*>(request_segment.rawBuffer()), request_segment.size());
+          if (bytes < 0) {
+            perror("send");
+          }
+#ifdef DEBUG
+          Console::log("Response sent on the fly");
+#endif
         }
+        // ***** END OF RECEIVE BLOCK *****
       }
     }
     // ***** END OF SOCKET ITERATION BLOCK *****
     currSet = nextSet;
     timeout = T;
     currMaxFD = nextMaxFD; // Update maximum file descriptor value for the next cycle...
+#ifdef DEBUG
+    std::string s;
+    s += ("currMaxFD: " + str(currMaxFD) + ", sockets: ");
+    for (int k = 0; k < currMaxFD + 1; k++) {
+      if (FD_ISSET(k, &currSet)) {
+        s += (str(k) + ' ');
+      }
+    }
+    Console::log(s);
+#endif
   }
 }
 
@@ -221,12 +266,26 @@ void TCPListener::stop() {
   }
 }
 
-int TCPListener::send(const SocketFD sfd, const void* buff, const size_t s) {
+int TCPListener::send(const SocketFD sfd, const uint8_t* buff, const size_t s) {
   return ::send(sfd, buff, s, 0);
 }
 
-int TCPListener::receive(const SocketFD sfd, void* buff, const size_t s) {
-  return recv(sfd, buff, s, 0);
+int TCPListener::receive(const SocketFD sfd, uint8_t* buff, const size_t s, bool must_fill) {
+  uint total_bytes = 0;
+  uint pointer_shift = 0;
+  do {
+    int bytes = recv(sfd, buff + pointer_shift, s - total_bytes, 0);
+    if (bytes < 0) {
+      perror("receive");
+      return bytes;
+    }
+    pointer_shift += bytes;
+    total_bytes += bytes;
+  } while ((total_bytes < s) && must_fill);
+  if (must_fill) {
+    assert(total_bytes == s);
+  }
+  return total_bytes;
 }
 
 bool TCPListener::listening() {

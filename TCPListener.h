@@ -32,8 +32,8 @@ private:
   void bindSocket(const PortNum pn);
   void initClientAddress();
   void listen();
-  int send(const SocketFD sfd, const void* buff, const size_t s);
-  int receive(const SocketFD sfd, void* buff, const size_t s);
+  int send(const SocketFD sfd, const uint8_t* buff, const size_t s);
+  int receive(const SocketFD sfd, uint8_t* buff, const size_t s, bool must_fill = true);
   // ********************
   bool listening();
   // ********************

@@ -86,6 +86,7 @@ AudioVector Manager::getOtherClientStreams(const ClientToken t) {
     }
   }
   // TODO: To remove this.
+  /*
   bool empty = true;
   for (int i {0}; i < v.size(); i++) {
     if (v[i] != 0.0) {
@@ -96,6 +97,7 @@ AudioVector Manager::getOtherClientStreams(const ClientToken t) {
   if (empty) {
     std::cout << "getOtherClientStreams: returning empty vector for token " << t << '\n';
   }
+  */
   return v;
 }
 
@@ -160,4 +162,13 @@ const std::list<ClientTID> Manager::getTIDHistory(ClientToken tk) {
   }
   std::cerr << "Argh! No history found\n"; // TODO
   return std::list<ClientTID>();
+}
+
+bool Manager::is_valid_token(ClientToken token) {
+    for (ClientList::iterator it = myClients.begin(); it != myClients.end(); it++) {
+        if (it->token() == token) {
+            return true;
+        }
+    }
+    return false;
 }

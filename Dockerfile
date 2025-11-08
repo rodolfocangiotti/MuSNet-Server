@@ -13,7 +13,7 @@ RUN --mount=type=ssh GIT_SSH_COMMAND="ssh -v" git clone git@github.com:rodolfoca
 
 WORKDIR /home/ubuntu/MuSNet-Server
 RUN git checkout tcp_audio_stream
-RUN g++ -std=c++11 -DDEBUG -DVERBOSENESS=3 -omainserver *.cpp
+RUN g++ -std=c++11 -DDEBUG -DVERBOSENESS=2 -omainserver *.cpp
 
 RUN mkdir -v /home/ubuntu/muslogs
 
