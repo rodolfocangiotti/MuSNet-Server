@@ -35,6 +35,8 @@ void TCPResponse::operator()(TCPRequestInfo& request) {
         if ((_manager.is_valid_token(t))) {
             ClientTID request_tid = request_segment.tid();
             ClientTID response_tid = 0;
+            TCPSegment::Flag flag = request_segment.flag();
+            std::cout << "flag (checkpoint n.2): " << (int) flag << '\n';
             // Profiler::add_record(t, request_tid, Profiler::OperationID::RESPONSE_START);
             AudioVector from_client = request_segment.streamCopy();
             AudioVector to_client;
@@ -47,24 +49,36 @@ void TCPResponse::operator()(TCPRequestInfo& request) {
                         return;
                     }
                 }
-                if (_manager.updateClientStream(t, request_tid, from_client) < 0) {  // Save stream from client...
-                    std::cerr << getUTCTime() + RED << " [ERROR] Error updating client stream!" << RESET << '\n';
+                if (flag == STANDARD_STREAM) {
+                    if (_manager.updateClientStream(t, request_tid, from_client) < 0) {  // Save stream from client...
+                        std::cerr << getUTCTime() + RED << " [ERROR] Error updating client stream!" << RESET << '\n';
+                    }
+                    to_client = _manager.getOtherClientStreams(t);  // Compute the response stream to client...
+                } else if  (flag == SEND_ONLY_STREAM) {
+                    if (_manager.updateClientStream(t, request_tid, from_client) < 0) {  // Save stream from client...
+                        std::cerr << getUTCTime() + RED << " [ERROR] Error updating client stream!" << RESET << '\n';
+                    }
+                    to_client = AudioVector(0); // Empty vector...
+                } else if (flag == RECEIVE_ONLY_STREAM) {
+                    assert(from_client.size() == 0);
+                    to_client = _manager.getOtherClientStreams(t);
+                } else {
+                    std::cerr << RED << "Invalid flag for request " << t << '-' << request_tid << ": " << flag << '\n';
                 }
-                to_client = _manager.getOtherClientStreams(t);  // Compute the response stream to client...
                 // response_tid = _manager.getClientResponseTID(t);
                 response_tid = request_tid;
             }
             // Profiler::add_record(t, request_tid, Profiler::OperationID::RESPONSE_END);
             if (response_tid > 0) {
-                TCPSegment& tcp_segment = request.refer_writable_segment();
-                tcp_segment.buildAudioStream(t, response_tid, to_client);
+                TCPSegment& response_segment = request.refer_writable_segment();
+                response_segment.buildAudioStream(t, response_tid, to_client, flag);
                 // Profiler::add_record(t, response_tid, Profiler::OperationID::DISPATCH_PENDING);
 
                 struct sockaddr_in addrss = request.address();
                 socklen_t addrssLen = request.addressLength();
                 SocketFD sockFD = request.fileDescriptor();
                 // Console::log("DEBUG >> sockFD = " + str(sockFD));
-                int bytes = send(sockFD, static_cast<const uint8_t*>(request_segment.rawBuffer()), request_segment.size(), 0);
+                int bytes = send(sockFD, static_cast<const uint8_t*>(response_segment.rawBuffer()), response_segment.size(), 0);
                 if (bytes < 0) {
                     perror("send()");
                     if (errno == EINTR) {

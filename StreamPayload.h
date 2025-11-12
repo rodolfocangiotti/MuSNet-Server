@@ -10,6 +10,7 @@ class StreamPayload: public Payload {
 public:
   typedef uint8_t Mode;
   typedef uint16_t StreamSize;
+  typedef uint8_t Flag;
   // ********************
   StreamPayload(const MaxSize ms);
   ~StreamPayload();
@@ -18,8 +19,9 @@ public:
   ClientTID tid() const;
   StreamSize streamSize() const;
   AudioVector streamCopy() const;
+  Flag flag() const;
   // ********************
-  void buildAudioStream(const ClientToken t, const ClientTID tid, const AudioVector& v);
+  void buildAudioStream(const ClientToken t, const ClientTID tid, const AudioVector& v, const Flag f = STANDARD_STREAM);
 };
 
 #endif

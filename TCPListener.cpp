@@ -195,7 +195,9 @@ void TCPListener::listen() {
             int res = myManager.removeClient(t);
             if (res < 0) {
               std::cerr << getUTCTime() << RED << " [ERROR] Impossible to remove client!" << RESET << '\n';
-              continue;
+              // continue;
+              // Send an OKAY response anyway because it's like to say: "okay, the token won't be/isn't here anymore"...
+              // Maybe different response code is better.
             }
             request_segment.buildExitResponse();
           } else if (tcp_buffer[0] == AUDIO_STREAM_DATA) {
@@ -207,24 +209,28 @@ void TCPListener::listen() {
             assert(bytes == 8);
             TCPSegment::Size size = *(reinterpret_cast<TCPSegment::Size*>(tcp_buffer.data() + 7));
 #ifdef DEBUG
-            std::cout << "header: " << *(reinterpret_cast<TCPSegment::Header*>(tcp_buffer.data())) << std::endl;
+            std::cout << "header: " << static_cast<uint>(*(reinterpret_cast<TCPSegment::Header*>(tcp_buffer.data()))) << std::endl;
             std::cout << "token: " << *(reinterpret_cast<ClientToken*>(tcp_buffer.data() + 1)) << std::endl;
             std::cout << "tid: " << *(reinterpret_cast<ClientTID*>(tcp_buffer.data() + 3)) << std::endl;
             std::cout << "size: " << size << std::endl;
+            std::cout << "flag: " << static_cast<uint>(*(reinterpret_cast<TCPSegment::Flag*>(tcp_buffer.data() + 9 + sizeof (AudioSample) * size))) << std::endl;
 #endif
-            assert(size == NUM_CHANNELS * AUDIO_VECTOR_SIZE);
-            bytes = receive(i, tcp_buffer.data() + 9, size * sizeof (AudioSample));
+            assert((size == NUM_CHANNELS * AUDIO_VECTOR_SIZE) || (size == 0));
+            bytes = receive(i, tcp_buffer.data() + 9, size * sizeof (AudioSample) + sizeof (TCPSegment::Flag));
             if (bytes < 0) {
               std::cerr << "Impossible to finalize audio exchange request!" << '\n';
               continue;
             }
-            assert(bytes == size * sizeof (AudioSample));
+            assert(bytes == size * sizeof (AudioSample) + sizeof (TCPSegment::Flag));
             std::copy(tcp_buffer.data(), tcp_buffer.data() + UDP_BUFFER_SIZE, static_cast<uint8_t*>(request_segment.pointWritableBuffer()));
             tcp_buffer.assign(UDP_BUFFER_SIZE, 0);  // Reset content...
             myRequestInfo.setFileDescriptor(i);
             // myRequestInfo.setAddress(&clieAddrss, &clieAddrssLen);
             myRequestInfo.setReceiptTime(std::chrono::high_resolution_clock::now());
             myThreadPool.append(myRequestInfo);
+#ifdef DEBUG
+          Console::log("Audio stream request on queue.");
+#endif
             continue; // Response send is managed in a separate thread, in this case...
           } else {
             std::cerr << getUTCTime() << RED << " [ERROR] Not consistent header (" << static_cast<uint8_t>(tcp_buffer[0]) << ") of TCP request!" << RESET << '\n';

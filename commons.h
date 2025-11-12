@@ -4,15 +4,15 @@
 #include <string>
 
 #define AUDIO_SAMPLE_RATE 44100
-#define AUDIO_VECTOR_SIZE 64
-#define NUM_CHANNELS 64
+#define AUDIO_VECTOR_SIZE 512
+#define NUM_CHANNELS 16
 
 #define MAX_TCP_CONNECTIONS 16
 #define TCP_BUFFER_SIZE 3 // That is sizeof (Header) + sizeof (Token)...
 // TODO TODO TODO
 // FOLLOWING VALUE IS TEMPORARY, ONLY FOR TESTING AMBISONIC SIGNALS VIA TCP!
-#define UDP_BUFFER_SIZE 8201  // That is sizeof (Header) + sizeof (Token) + sizeof (TID) + sizeof (Size) + sizeof (AudioSample) * AUDIO_VECTOR_SIZE * NUM_CHANNELS...
-// Header, token, TID and size are 9 bytes...
+#define UDP_BUFFER_SIZE 16394  // That is sizeof (Header) + sizeof (Token) + sizeof (TID) + sizeof (Size) + sizeof (AudioSample) * AUDIO_VECTOR_SIZE * NUM_CHANNELS + sizeof (Flag)...
+// Header, token, TID, size and flag are 10 bytes...
 // ****************
 // IMPORTANT: UDP packets shouldn't be larger than 1492 bytes, which is the Ethernet MTU (1500) at physical layer minus the overhead (8).
 // If that threshold value is exceeded, the UDP packet will be fragmented, letting the data exchange be even less reliable (more subject to wrong order or data loss).
@@ -37,6 +37,12 @@ enum headers {
   ENTRY_REQUEST,
   EXIT_REQUEST,
   AUDIO_STREAM_DATA
+};
+
+enum flags {
+  STANDARD_STREAM,
+  SEND_ONLY_STREAM,
+  RECEIVE_ONLY_STREAM
 };
 
 #define str(n) std::to_string(n)

@@ -48,8 +48,16 @@ AudioVector StreamPayload::streamCopy() const { // This method returns a copy of
   return v;
 }
 
-void StreamPayload::buildAudioStream(const ClientToken t, const ClientTID tid, const AudioVector& v) {
-  mySize = sizeof (Header) + sizeof (ClientToken) + sizeof (ClientTID) + sizeof (Size) + sizeof (AudioSample) * v.size();
+StreamPayload::Flag StreamPayload::flag() const {
+  const Byte* bp = &(myBuff[7]);
+  const StreamSize* ssp = reinterpret_cast<const StreamSize*>(bp);
+  bp = &(myBuff[9 + sizeof (AudioSample) * *ssp]);
+  const Flag* fp = reinterpret_cast<const Flag*>(bp);
+  return *fp;
+}
+
+void StreamPayload::buildAudioStream(const ClientToken t, const ClientTID tid, const AudioVector& v, const Flag f) {
+  mySize = sizeof (Header) + sizeof (ClientToken) + sizeof (ClientTID) + sizeof (Size) + sizeof (AudioSample) * v.size() + sizeof (Flag);
   assert(mySize <= myBuff.size());
   Byte* bp = &(myBuff[0]);
   Header* hp = static_cast<Header*>(bp);
@@ -68,4 +76,7 @@ void StreamPayload::buildAudioStream(const ClientToken t, const ClientTID tid, c
   for (int i = 0; i < v.size(); i++) {
     asp[i] = v[i];
   }
+  bp = &(myBuff[9 + sizeof (AudioSample) * v.size()]);
+  Flag* fp = reinterpret_cast<Flag*>(bp);
+  *fp = f;
 }
