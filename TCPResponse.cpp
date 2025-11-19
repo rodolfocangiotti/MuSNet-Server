@@ -61,6 +61,9 @@ void TCPResponse::operator()(TCPRequestInfo& request) {
                     to_client = AudioVector(0); // Empty vector...
                 } else if (flag == RECEIVE_ONLY_STREAM) {
                     assert(from_client.size() == 0);
+                    if (_manager.updateClientStream(t, request_tid, from_client) < 0) {  // Save stream from client...
+                        std::cerr << getUTCTime() + RED << " [ERROR] Error updating client stream!" << RESET << '\n';
+                    }
                     to_client = _manager.getOtherClientStreams(t);
                 } else {
                     std::cerr << RED << "Invalid flag for request " << t << '-' << request_tid << ": " << flag << '\n';
@@ -78,6 +81,7 @@ void TCPResponse::operator()(TCPRequestInfo& request) {
                 socklen_t addrssLen = request.addressLength();
                 SocketFD sockFD = request.fileDescriptor();
                 // Console::log("DEBUG >> sockFD = " + str(sockFD));
+                std::cout << "Response size: " << response_segment.size() << '\n';
                 int bytes = send(sockFD, static_cast<const uint8_t*>(response_segment.rawBuffer()), response_segment.size(), 0);
                 if (bytes < 0) {
                     perror("send()");
