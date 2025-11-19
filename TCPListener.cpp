@@ -141,7 +141,7 @@ void TCPListener::listen() {
         // ***** RECEIVE BLOCK *****
         // Try to receive the header first...
         Buffer tcp_buffer(UDP_BUFFER_SIZE);
-        int bytes = receive(i, tcp_buffer.data(), 1, false);
+        int bytes = receive(i, tcp_buffer.data(), 1);
         if (bytes <= 0 ) {
           if (bytes < 0) {
             perror("recv()");
@@ -184,7 +184,7 @@ void TCPListener::listen() {
             request_segment.buildEntryResponse(t);
           } else if (tcp_buffer[0] == EXIT_REQUEST) {
             int bytes = receive(i, tcp_buffer.data() + 1, 2);
-            if (bytes < 0) {
+            if (bytes <= 0) {
               std::cerr << "Impossible to finalize exit request!" << '\n';
               continue;
             }
@@ -202,7 +202,7 @@ void TCPListener::listen() {
             request_segment.buildExitResponse();
           } else if (tcp_buffer[0] == AUDIO_STREAM_DATA) {
             int bytes = receive(i, tcp_buffer.data() + 1, 8);
-            if (bytes < 0) {
+            if (bytes <= 0) {
               std::cerr << "Impossible to finalize audio exchange request!" << '\n';
               continue;
             }
@@ -217,7 +217,7 @@ void TCPListener::listen() {
 #endif
             assert((size == NUM_CHANNELS * AUDIO_VECTOR_SIZE) || (size == 0));
             bytes = receive(i, tcp_buffer.data() + 9, size * sizeof (AudioSample) + sizeof (TCPSegment::Flag));
-            if (bytes < 0) {
+            if (bytes <= 0) {
               std::cerr << "Impossible to finalize audio exchange request!" << '\n';
               continue;
             }
@@ -294,21 +294,21 @@ int TCPListener::send(const SocketFD sfd, const uint8_t* buff, const size_t s) {
   return ::send(sfd, buff, s, 0);
 }
 
-int TCPListener::receive(const SocketFD sfd, uint8_t* buff, const size_t s, bool must_fill) {
+int TCPListener::receive(const SocketFD sfd, uint8_t* buff, const size_t s) {
   uint total_bytes = 0;
   uint pointer_shift = 0;
   do {
     int bytes = recv(sfd, buff + pointer_shift, s - total_bytes, 0);
-    if (bytes < 0) {
-      perror("receive");
+    if (bytes <= 0) { // if bytes is 0 means that the connection was closed...
+      if (bytes < 0) {
+        perror("receive()");
+      }
       return bytes;
     }
     pointer_shift += bytes;
     total_bytes += bytes;
-  } while ((total_bytes < s) && must_fill);
-  if (must_fill) {
-    assert(total_bytes == s);
-  }
+  } while (total_bytes < s);
+  assert(total_bytes == s);
   return total_bytes;
 }
 

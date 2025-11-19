@@ -33,7 +33,7 @@ private:
   void initClientAddress();
   void listen();
   int send(const SocketFD sfd, const uint8_t* buff, const size_t s);
-  int receive(const SocketFD sfd, uint8_t* buff, const size_t s, bool must_fill = true);
+  int receive(const SocketFD sfd, uint8_t* buff, const size_t s);
   // ********************
   bool listening();
   // ********************
