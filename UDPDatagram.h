@@ -9,7 +9,7 @@
 class UDPDatagram: public StreamPayload {
 public:
   typedef uint8_t Mode;
-  typedef uint16_t StreamSize;
+  typedef uint32_t StreamSize;
   // ********************
   UDPDatagram(const MaxSize ms);
   ~UDPDatagram();

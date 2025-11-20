@@ -201,19 +201,19 @@ void TCPListener::listen() {
             }
             request_segment.buildExitResponse();
           } else if (tcp_buffer[0] == AUDIO_STREAM_DATA) {
-            int bytes = receive(i, tcp_buffer.data() + 1, 8);
+            int bytes = receive(i, tcp_buffer.data() + 1, 10);
             if (bytes <= 0) {
               std::cerr << "Impossible to finalize audio exchange request!" << '\n';
               continue;
             }
-            assert(bytes == 8);
+            assert(bytes == 10);
             TCPSegment::Size size = *(reinterpret_cast<TCPSegment::Size*>(tcp_buffer.data() + 7));
 #ifdef DEBUG
             std::cout << "header: " << static_cast<uint>(*(reinterpret_cast<TCPSegment::Header*>(tcp_buffer.data()))) << std::endl;
             std::cout << "token: " << *(reinterpret_cast<ClientToken*>(tcp_buffer.data() + 1)) << std::endl;
             std::cout << "tid: " << *(reinterpret_cast<ClientTID*>(tcp_buffer.data() + 3)) << std::endl;
             std::cout << "size: " << size << std::endl;
-            std::cout << "flag: " << static_cast<uint>(*(reinterpret_cast<TCPSegment::Flag*>(tcp_buffer.data() + 9 + sizeof (AudioSample) * size))) << std::endl;
+            std::cout << "flag: " << static_cast<uint>(*(reinterpret_cast<TCPSegment::Flag*>(tcp_buffer.data() + 11 +  sizeof (AudioSample) * size))) << std::endl;
 #endif
             assert((size == NUM_CHANNELS * AUDIO_VECTOR_SIZE) || (size == 0));
             bytes = receive(i, tcp_buffer.data() + 9, size * sizeof (AudioSample) + sizeof (TCPSegment::Flag));

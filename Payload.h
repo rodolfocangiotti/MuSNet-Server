@@ -8,8 +8,8 @@
 class Payload {
 public:
   typedef uint8_t Header;
-  typedef uint16_t MaxSize;
-  typedef uint16_t Size;
+  typedef uint32_t MaxSize;
+  typedef uint32_t Size;
   // ********************
   Payload(const MaxSize ms);
   ~Payload();
