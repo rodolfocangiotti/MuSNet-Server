@@ -206,21 +206,23 @@ void TCPListener::listen() {
               std::cerr << "Impossible to finalize audio exchange request!" << '\n';
               continue;
             }
-            assert(bytes == 10);
-            TCPSegment::Size size = *(reinterpret_cast<TCPSegment::Size*>(tcp_buffer.data() + 7));
+            TCPSegment::StreamSize size = *(reinterpret_cast<TCPSegment::StreamSize*>(tcp_buffer.data() + 7));
 #ifdef DEBUG
             std::cout << "header: " << static_cast<uint>(*(reinterpret_cast<TCPSegment::Header*>(tcp_buffer.data()))) << std::endl;
             std::cout << "token: " << *(reinterpret_cast<ClientToken*>(tcp_buffer.data() + 1)) << std::endl;
             std::cout << "tid: " << *(reinterpret_cast<ClientTID*>(tcp_buffer.data() + 3)) << std::endl;
-            std::cout << "size: " << size << std::endl;
-            std::cout << "flag: " << static_cast<uint>(*(reinterpret_cast<TCPSegment::Flag*>(tcp_buffer.data() + 11 +  sizeof (AudioSample) * size))) << std::endl;
+            std::cout << "stream size: " << size << std::endl;
 #endif
+            assert(bytes == 10);
             assert((size == NUM_CHANNELS * AUDIO_VECTOR_SIZE) || (size == 0));
-            bytes = receive(i, tcp_buffer.data() + 9, size * sizeof (AudioSample) + sizeof (TCPSegment::Flag));
+            bytes = receive(i, tcp_buffer.data() + 11, size * sizeof (AudioSample) + sizeof (TCPSegment::Flag));
             if (bytes <= 0) {
               std::cerr << "Impossible to finalize audio exchange request!" << '\n';
               continue;
             }
+#ifdef DEBUG
+            std::cout << "flag: " << static_cast<uint>(*(reinterpret_cast<TCPSegment::Flag*>(tcp_buffer.data() + 11 +  sizeof (AudioSample) * size))) << std::endl;
+#endif
             assert(bytes == size * sizeof (AudioSample) + sizeof (TCPSegment::Flag));
             std::copy(tcp_buffer.data(), tcp_buffer.data() + UDP_BUFFER_SIZE, static_cast<uint8_t*>(request_segment.pointWritableBuffer()));
             tcp_buffer.assign(UDP_BUFFER_SIZE, 0);  // Reset content...
@@ -229,7 +231,7 @@ void TCPListener::listen() {
             myRequestInfo.setReceiptTime(std::chrono::high_resolution_clock::now());
             myThreadPool.append(myRequestInfo);
 #ifdef DEBUG
-          Console::log("Audio stream request on queue.");
+            Console::log("Audio stream request on queue.");
 #endif
             continue; // Response send is managed in a separate thread, in this case...
           } else {

@@ -36,7 +36,7 @@ void TCPResponse::operator()(TCPRequestInfo& request) {
             ClientTID request_tid = request_segment.tid();
             ClientTID response_tid = 0;
             TCPSegment::Flag flag = request_segment.flag();
-            std::cout << "flag (checkpoint n.2): " << (int) flag << '\n';
+            // std::cout << "flag (checkpoint n.2): " << (int) flag << '\n';
             // Profiler::add_record(t, request_tid, Profiler::OperationID::RESPONSE_START);
             AudioVector from_client = request_segment.streamCopy();
             AudioVector to_client;
@@ -94,11 +94,9 @@ void TCPResponse::operator()(TCPRequestInfo& request) {
                         close(sockFD);
                     }
                 }
-                /*
-                if (bytes != request_segment.size()) {
-                    std::cout << "bytes: " << bytes << std::endl;
-                }
-                */
+                // if (bytes != request_segment.size()) {
+                //     std::cout << "bytes: " << bytes << std::endl;
+                // }
             }
         } else {
             std::cerr << "Request from invalid token (" << t << "). Skipping it." << '\n';
