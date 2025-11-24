@@ -76,6 +76,46 @@ void TCPListener::bindSocket(const PortNum pn) {
 #endif
 }
 
+void TCPListener::check_socket_buffer() {
+    int sockopt_value = 0;
+    socklen_t sockopt_size = sizeof sockopt_value;
+    if (getsockopt(mySockFD, SOL_SOCKET, SO_SNDBUF, reinterpret_cast<char*>(&sockopt_value), &sockopt_size) < 0) {
+        perror("getsockopt()");
+    } else {
+        std::cout << "Send buffer size: " << sockopt_value << '\n';
+    }
+    if (sockopt_value < UDP_BUFFER_SIZE) {
+        std::cout << "Setting send buffer size to: " << UDP_BUFFER_SIZE << '\n';
+        sockopt_value = UDP_BUFFER_SIZE;
+        if (setsockopt(mySockFD, SOL_SOCKET, SO_SNDBUF, reinterpret_cast<const char*>(&sockopt_value), sockopt_size) < 0) {
+            perror("setsockopt()");
+        }
+        if (getsockopt(mySockFD, SOL_SOCKET, SO_SNDBUF, reinterpret_cast<char*>(&sockopt_value), &sockopt_size) < 0) {
+            perror("getsockopt()");
+        } else {
+            std::cout << "Send buffer size set to: " << sockopt_value << '\n';
+        }
+    }
+
+    if (getsockopt(mySockFD, SOL_SOCKET, SO_RCVBUF, reinterpret_cast<char*>(&sockopt_value), &sockopt_size) < 0) {
+        perror("getsockopt()");
+    } else {
+        std::cout << "Receive buffer size: " << sockopt_value << '\n';
+    }
+    if (sockopt_value < UDP_BUFFER_SIZE) {
+        std::cout << "Setting receive buffer size to: " << UDP_BUFFER_SIZE << '\n';
+        sockopt_value = UDP_BUFFER_SIZE;
+        if (setsockopt(mySockFD, SOL_SOCKET, SO_RCVBUF, reinterpret_cast<const char*>(&sockopt_value), sockopt_size) < 0) {
+            perror("setsockopt()");
+        }
+        if (getsockopt(mySockFD, SOL_SOCKET, SO_RCVBUF, reinterpret_cast<char*>(&sockopt_value), &sockopt_size) < 0) {
+            perror("getsockopt()");
+        } else {
+            std::cout << "Rceveive buffer size set to: " << sockopt_value << '\n';
+        }
+    }
+}
+
 void TCPListener::initClientAddress() {
   clieAddrssLen = sizeof clieAddrss;
 }
@@ -83,6 +123,7 @@ void TCPListener::initClientAddress() {
 void TCPListener::configure(const PortNum pn) {
   initSocket();
   bindSocket(pn);
+  check_socket_buffer();
   initClientAddress();
 }
 

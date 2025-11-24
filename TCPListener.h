@@ -30,6 +30,7 @@ public:
 private:
   void initSocket();
   void bindSocket(const PortNum pn);
+  void check_socket_buffer();
   void initClientAddress();
   void listen();
   int send(const SocketFD sfd, const uint8_t* buff, const size_t s);
