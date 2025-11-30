@@ -172,3 +172,73 @@ bool Manager::is_valid_token(ClientToken token) {
     }
     return false;
 }
+
+int Manager::update_client_connection_info(const ClientToken token, const SocketFD file_descr, const struct sockaddr_in* address, const socklen_t address_len) {
+    for (ClientList::iterator it = myClients.begin(); it != myClients.end(); it++) {
+        if (it->token() == token) {
+            it->set_connection_info(file_descr, address, address_len);
+            return 0;
+        }
+    }
+    return -1;
+}
+
+int Manager::get_client_connection_info(const ClientToken token, SocketFD* file_descr, struct sockaddr_in* address, socklen_t* address_len) {
+    for (ClientList::iterator it = myClients.begin(); it != myClients.end(); it++) {
+        if (it->token() == token) {
+            it->get_connection_info(file_descr, address, address_len);
+            return 0;
+        }
+    }
+    return -1;
+}
+
+int Manager::find_response_candidate(ClientToken* result) {
+    for (ClientList::iterator it = myClients.begin(); it != myClients.end(); it++) {
+        ClientToken current_token = it->token();
+        // std::cout << "Current token: " << current_token << '\n';
+        bool is_valid_candidate = false;
+        for (ClientList::iterator oit = myClients.begin(); oit != myClients.end(); oit++) {
+            // std::cout << "Other token: " << oit->token() << '\n';
+            if (oit->token() == current_token) {
+                // std::cout << "Skipped (1)" << '\n';
+                continue;
+            }
+            if (oit->get_flag() == RECEIVE_ONLY_STREAM) {
+                // std::cout << "Skipped (2)" << '\n';
+                continue;
+            }
+            is_valid_candidate = true;
+            if (!(oit->has_vector_for(current_token))) {
+                // std::cout << "No vectors (3)" << '\n';
+                is_valid_candidate = false;
+                break;
+            }
+        }
+        if (is_valid_candidate) {
+            *result = current_token;
+            return 0;
+        }
+    }
+    return -1;
+}
+
+int Manager::update_client_flag(const ClientToken token, const Flag flag) {
+    for (ClientList::iterator it = myClients.begin(); it != myClients.end(); it++) {
+        if (it->token() == token) {
+            it->set_flag(flag);
+            return 0;
+        }
+    }
+    return -1;
+}
+
+int Manager::get_client_flag(const ClientToken token, Flag* flag) {
+    for (ClientList::iterator it = myClients.begin(); it != myClients.end(); it++) {
+        if (it->token() == token) {
+            *flag = it->get_flag();
+            return 0;
+        }
+    }
+    return -1;
+}

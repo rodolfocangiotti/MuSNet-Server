@@ -15,6 +15,7 @@ typedef std::vector<Byte> Buffer;
 
 typedef int16_t ClientToken;
 typedef int32_t ClientTID;
+typedef uint8_t Flag;
 
 typedef uint16_t PortNum;
 typedef int SocketFD;

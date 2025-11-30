@@ -338,6 +338,14 @@ int TCPListener::send(const SocketFD sfd, const uint8_t* buff, const size_t s) {
 }
 
 int TCPListener::receive(const SocketFD sfd, uint8_t* buff, const size_t s) {
+  /*
+  Probably this mechanism negatively affects networking performances.
+  TODO:
+  1. profile this function, to get the average time needed to receive a whole streaming packet
+  2. implement a new mechanism to store the portions of streaming packets per socket or client IP
+  3. profile the new mechanism and compare it with the current one
+  4. revert code in case no performance improvements are detected
+  */
   uint total_bytes = 0;
   uint pointer_shift = 0;
   do {

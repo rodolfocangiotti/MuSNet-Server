@@ -1,6 +1,7 @@
 #ifndef STREAM_CLIENT_H
 #define STREAM_CLIENT_H
 
+#include <arpa/inet.h>
 #include <cstdint>
 #include <list>
 #include "StreamVector.h"
@@ -29,6 +30,11 @@ public:
   // ********************
   AudioVector retrieveVector(const ClientToken ot);
   void insertVector(const ClientToken mt, const ClientTID wtid, const AudioVector& v);
+  void set_connection_info(const SocketFD fd, const struct sockaddr_in* addr, const socklen_t addr_len);
+  void get_connection_info(SocketFD* fd, struct sockaddr_in* addr, socklen_t* addr_len) const;
+  bool has_vector_for(const ClientToken ot);
+  void set_flag(Flag f);
+  Flag get_flag() const;
 private:
   typedef std::list<StreamVector> StreamQueue;
   typedef std::list<ClientToken> ReadManager;
@@ -41,6 +47,11 @@ private:
   int myQueueMaxSize;
   bool waiting;
   std::list<ClientTID> tidHisto;
+
+  SocketFD _socket;
+  struct sockaddr_in _address;
+  socklen_t _address_length;
+  Flag _flag;
 };
 
 #endif

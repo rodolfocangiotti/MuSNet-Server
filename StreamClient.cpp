@@ -140,3 +140,32 @@ AudioVector StreamClient::retrieveVector(const ClientToken ot) {
   }
   return v;
 }
+
+void StreamClient::set_connection_info(const SocketFD fd, const struct sockaddr_in* addr, const socklen_t addr_len) {
+    _socket = fd;
+    _address = *addr;
+    _address_length = addr_len;
+}
+
+void StreamClient::get_connection_info(SocketFD* fd, struct sockaddr_in* addr, socklen_t* addr_len) const {
+    *fd = _socket;
+    *addr = _address;
+    *addr_len = _address_length;
+}
+
+bool StreamClient::has_vector_for(const ClientToken ot) {
+    for (StreamQueue::iterator sv = myQueue.begin(); sv != myQueue.end(); sv++) {
+        if (sv->isReadableBy(ot)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void StreamClient::set_flag(Flag f) {
+    _flag = f;
+}
+
+Flag StreamClient::get_flag() const {
+    return _flag;
+}
