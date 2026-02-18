@@ -5,13 +5,13 @@
 
 #define AUDIO_SAMPLE_RATE 44100
 #define AUDIO_VECTOR_SIZE 512
-#define NUM_CHANNELS 16
+#define NUM_CHANNELS 2
 
 #define MAX_TCP_CONNECTIONS 16
 #define TCP_BUFFER_SIZE 3 // That is sizeof (Header) + sizeof (Token)...
 // TODO TODO TODO
 // FOLLOWING VALUE IS TEMPORARY, ONLY FOR TESTING AMBISONIC SIGNALS VIA TCP!
-#define UDP_BUFFER_SIZE 16396  // That is sizeof (Header) + sizeof (Token) + sizeof (TID) + sizeof (Size) + sizeof (AudioSample) * AUDIO_VECTOR_SIZE * NUM_CHANNELS + sizeof (Flag)...
+#define UDP_BUFFER_SIZE (2 * 512 * 2 + 12)  // That is sizeof (Header) + sizeof (Token) + sizeof (TID) + sizeof (Size) + sizeof (AudioSample) * AUDIO_VECTOR_SIZE * NUM_CHANNELS + sizeof (Flag)...
 // Header, token, TID, size and flag are 12 bytes...
 // ****************
 // IMPORTANT: UDP packets shouldn't be larger than 1492 bytes, which is the Ethernet MTU (1500) at physical layer minus the overhead (8).

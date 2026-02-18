@@ -64,7 +64,7 @@ void TCPResponse::operator()(TCPRequestInfo& request) {
                 _manager.update_client_flag(t, flag);
 
                 if (flag == RECEIVE_ONLY_STREAM) {
-                    from_client = AudioVector(AUDIO_VECTOR_SIZE);
+                    from_client = AudioVector(AUDIO_VECTOR_SIZE * NUM_CHANNELS, 0.0);
                 }
                 if (_manager.updateClientStream(t, request_tid, from_client) < 0) {
                     std::cerr << getUTCTime() + RED << " [ERROR] Error updating client stream!" << RESET << '\n';
@@ -95,7 +95,7 @@ void TCPResponse::operator()(TCPRequestInfo& request) {
                             } else if (errno == EAGAIN || errno == EWOULDBLOCK) {
                                 // Do nothing...
                             } else {
-                                shutdown(SHUT_RDWR, response_fd);
+                                shutdown(response_fd, SHUT_RDWR);
                                 close(response_fd);
                             }
                         }

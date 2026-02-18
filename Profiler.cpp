@@ -38,6 +38,7 @@ int Profiler::add_record(ClientToken token, ClientTID transaction, OperationID o
         Locker lock_guard(_mutex);
         _records.emplace_back(token, transaction, operation, timestamp);
     }
+    return 0; // TODO
 }
 
 Profiler::Timestamp Profiler::get_timestamp(ClientToken token, ClientTID transaction, OperationID operation) {

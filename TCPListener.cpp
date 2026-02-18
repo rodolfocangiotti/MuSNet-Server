@@ -195,14 +195,15 @@ void TCPListener::listen() {
             }
             // For all the other errno-s connection should be closed...
           }
-          shutdown(SHUT_RDWR, i);
+          shutdown(i, SHUT_RDWR);
           close(i);
 #if defined(DEBUG) && VERBOSENESS > 0
           Console::log(getUTCTime() + " [DEBUG] TCP connection closed! (socket: " + str(i) + ')');
 #endif
           FD_CLR(i, &nextSet);
           if (i == nextMaxFD) {
-            for (int j = 0; j < nextMaxFD + 1; j++) { // Update maximum file descriptor value...
+            const int temp_max_fd = nextMaxFD;
+            for (int j = 0; j < temp_max_fd + 1; j++) { // Update maximum file descriptor value...
               if (FD_ISSET(j, &nextSet)) {
                 nextMaxFD = j;
               }
